@@ -1,0 +1,295 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "dct": "http://purl.org/dc/terms/",
+    "sc": "https://schema.org/"
+  },
+  "@type": "sc:Dataset",
+  "@id": "TODO:doi",
+  "name": "In-the-Wild Multimodal Affective Sensing Dataset (D1–D3)",
+  "description": "A three-wave longitudinal in-the-wild smartphone and wearable sensing dataset for moment-level affective state modeling. Collected annually from 2020 to 2022, the dataset pairs passive sensor data from participants' own Android smartphones and Fitbit wearables with dense in-situ self-reported affective labels collected via Experience Sampling Method (ESM). Three waves (D1, D2, D3) share a core label space of valence, arousal, stress, and task disturbance. D3 additionally includes PANAS-style affective word intensity labels. Hosted on Harvard Dataverse with gated access (CC BY-NC 4.0); users must agree to the Data Use Agreement before downloading. Preprocessing follows the reproducible pipeline of Zhang et al. (2024), DOI: 10.1145/3678578.",
+  "url": "https://dataverse.harvard.edu/TODO",
+  "version": "1.0.0",
+  "datePublished": "TODO",
+  "license": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "inLanguage": "en",
+  "keywords": [
+    "affective computing",
+    "mobile sensing",
+    "experience sampling",
+    "emotion recognition",
+    "stress detection",
+    "wearable sensing",
+    "smartphone sensing",
+    "ecological momentary assessment",
+    "longitudinal study",
+    "in-the-wild"
+  ],
+  "creator": [
+    {
+      "@type": "Person",
+      "name": "TODO: Author Name",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "TODO: Institution"
+      }
+    }
+  ],
+  "funder": {
+    "@type": "Organization",
+    "name": "TODO: Funding agency"
+  },
+  "citation": "TODO: Full paper citation",
+  "isAccessibleForFree": true,
+  "measurementTechnique": "Experience Sampling Method (ESM); passive smartphone sensing; Fitbit wearable sensing",
+  "variableMeasured": [
+    "Valence", "Arousal", "Stress", "Task Disturbance",
+    "Happy", "Relaxed", "Cheerful", "Content",
+    "Sad", "Anxious", "Depressed", "Angry"
+  ],
+  "temporalCoverage": "2020-02-07/2022-01-11",
+  "spatialCoverage": {
+    "@type": "Place",
+    "name": "South Korea"
+  },
+  "cr:conformsTo": "http://mlcommons.org/croissant/1.0",
+  "cr:isLiveDataset": false,
+  "rai:dataCollection": "Participants were university students recruited via campus bulletin boards. They installed a custom Android application that collected passive sensor data and delivered ESM prompts during waking hours (10 AM–10 PM). Wearables (Fitbit Inspire HR; Polar H10 for D1/D2 subsets) were worn throughout the collection period. All procedures were approved by the IRB at [TODO: institution], approval number [TODO: IRB number]. Dataset hosted on Harvard Dataverse (https://dataverse.harvard.edu/TODO) under CC BY-NC 4.0 with gated access.",
+  "rai:dataCollectionType": "Active (ESM self-report) and passive (smartphone/wearable sensor streams)",
+  "rai:dataPreprocessingProtocol": "Preprocessing follows the reproducible 8-stage mobile sensing pipeline of Zhang et al. (2024), DOI: 10.1145/3678578. Stages include: ESM QC (expired prompt removal, minimum response thresholds), feature extraction across current/15-min/epoch/daily time windows, feature normalization, LASSO-based feature selection, and LOSO cross-validation. Additional anonymization: GPS longitude offset by per-participant constant, contact numbers MD5-hashed, Bluetooth/Wi-Fi MAC addresses UUID-replaced.",
+  "rai:annotationsPerItem": "Each ESM instance has 4 shared labels (D1, D2, D3) or 12 labels (D3 only). Labels are self-reported by the participant at the time of the ESM prompt.",
+  "rai:personalSensitiveInformation": "Dataset contains passively sensed behavioral data (location, app usage, communication metadata) from real individuals, collected under IRB approval and written informed consent. Anonymization applied; see DATASHEET.md Section 2.",
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "D1-archive",
+      "name": "D1 dataset archive",
+      "description": "Complete data archive for wave D1 (Feb–Apr 2020, 92 participants after QC). Requires Harvard Dataverse account and agreement to Data Use Agreement before download.",
+      "contentUrl": "https://dataverse.harvard.edu/api/access/datafile/TODO_D1_FILE_ID",
+      "encodingFormat": "application/zip",
+      "sha256": "TODO"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "D2-archive",
+      "name": "D2 dataset archive",
+      "description": "Complete data archive for wave D2 (Dec 2020–Jan 2021, 99 participants after QC). Requires Harvard Dataverse account and agreement to Data Use Agreement before download.",
+      "contentUrl": "https://dataverse.harvard.edu/api/access/datafile/TODO_D2_FILE_ID",
+      "encodingFormat": "application/zip",
+      "sha256": "TODO"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "D3-archive",
+      "name": "D3 dataset archive",
+      "description": "Complete data archive for wave D3 (Nov 2021–Jan 2022, 106 participants after QC). Requires Harvard Dataverse account and agreement to Data Use Agreement before download.",
+      "contentUrl": "https://dataverse.harvard.edu/api/access/datafile/TODO_D3_FILE_ID",
+      "encodingFormat": "application/zip",
+      "sha256": "TODO"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "esm-responses",
+      "name": "ESM Responses",
+      "description": "In-situ self-reported affective state labels, one row per ESM response per participant. Available for all three waves.",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Pcode",
+          "name": "Pcode",
+          "description": "Anonymized participant identifier",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/TriggerTime",
+          "name": "TriggerTime",
+          "description": "Unix timestamp (milliseconds, UTC) when the ESM prompt was delivered",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/ResponseTime",
+          "name": "ResponseTime",
+          "description": "Unix timestamp (milliseconds, UTC) when the participant submitted the response",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Valence",
+          "name": "Valence",
+          "description": "Self-reported valence on a 7-point scale (−3=very negative to +3=very positive). Available in D1, D2, D3.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Arousal",
+          "name": "Arousal",
+          "description": "Self-reported arousal on a 7-point scale (−3=very calm to +3=very activated). Available in D1, D2, D3.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Stress",
+          "name": "Stress",
+          "description": "Self-reported stress. Scale −3 to +3 in D1 and D2; scale 0 to +6 in D3.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Disturbance",
+          "name": "Disturbance",
+          "description": "Self-reported task disturbance. Scale −3 to +3 in D1 and D2; scale 0 to +6 in D3.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Happy",
+          "name": "Happy",
+          "description": "PANAS-style affect word: Happy. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Relaxed",
+          "name": "Relaxed",
+          "description": "PANAS-style affect word: Relaxed. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Cheerful",
+          "name": "Cheerful",
+          "description": "PANAS-style affect word: Cheerful. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Content",
+          "name": "Content",
+          "description": "PANAS-style affect word: Content. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Sad",
+          "name": "Sad",
+          "description": "PANAS-style affect word: Sad. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Anxious",
+          "name": "Anxious",
+          "description": "PANAS-style affect word: Anxious. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Depressed",
+          "name": "Depressed",
+          "description": "PANAS-style affect word: Depressed. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "esm-responses/Angry",
+          "name": "Angry",
+          "description": "PANAS-style affect word: Angry. D3 only, scale 0 to +6.",
+          "dataType": "sc:Integer"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "user-info",
+      "name": "User Information",
+      "description": "Participant-level demographic and psychological trait measures, collected once per wave.",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/Pcode",
+          "name": "Pcode",
+          "description": "Anonymized participant identifier",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/Age",
+          "name": "Age",
+          "description": "Participant age in years",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/Gender",
+          "name": "Gender",
+          "description": "Participant gender (M/F)",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/BFI",
+          "name": "BFI",
+          "description": "Big Five Inventory short form (K-BFI-15): Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism",
+          "dataType": "sc:Number"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/PSS",
+          "name": "PSS",
+          "description": "Perceived Stress Scale (PSS-10) total score",
+          "dataType": "sc:Number"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/GHQ",
+          "name": "GHQ",
+          "description": "General Health Questionnaire (GHQ-12) total score",
+          "dataType": "sc:Number"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "user-info/PHQ",
+          "name": "PHQ",
+          "description": "Patient Health Questionnaire (PHQ-9) depression score. Available in D1 and D2 only.",
+          "dataType": "sc:Number"
+        }
+      ]
+    },
+    {
+      "@type": "cr:RecordSet",
+      "@id": "fitbit-heartrate",
+      "name": "Fitbit Heart Rate",
+      "description": "Continuous wrist-based heart rate from Fitbit Inspire HR, sampled at 1 Hz. Available for all three waves.",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "fitbit-heartrate/Pcode",
+          "name": "Pcode",
+          "description": "Anonymized participant identifier",
+          "dataType": "sc:Text"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "fitbit-heartrate/timestamp",
+          "name": "timestamp",
+          "description": "Unix timestamp (milliseconds, UTC)",
+          "dataType": "sc:Integer"
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "fitbit-heartrate/value",
+          "name": "value",
+          "description": "Heart rate in beats per minute (BPM)",
+          "dataType": "sc:Number"
+        }
+      ]
+    }
+  ]
+}
