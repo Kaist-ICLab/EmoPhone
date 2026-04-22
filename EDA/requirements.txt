@@ -1,0 +1,21 @@
+# EDA notebook dependencies
+#
+# Install from this directory:
+#   pip install -r requirements.txt
+
+# Core scientific stack
+numpy>=1.24,<3.0
+pandas>=2.0,<3.0
+scipy>=1.10,<2.0
+
+# Visualization
+matplotlib>=3.7,<4.0
+seaborn>=0.12,<1.0
+
+# ML / manifold learning (used in psych_affect.ipynb)
+scikit-learn>=1.3,<2.0
+umap-learn>=0.5,<1.0
+
+# Notebook runtime
+jupyterlab>=4.0,<5.0
+ipykernel>=6.0,<7.0

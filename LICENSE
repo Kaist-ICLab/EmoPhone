@@ -1,32 +1,12 @@
-MIT License
+# Code License
 
-Copyright (c) 2026 [Copyright Holder — TBD on acceptance]
+The code license for this repository is **TBD** and will be finalized before
+public release.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Until a license is selected and this file is replaced with the final license
+text, this repository should be treated as pre-release research material. Do
+not redistribute, reuse, or relicense the code outside the collaboration context
+without written permission from the authors.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
----
-
-NOTE ON DATA LICENSING
-
-This MIT license applies only to the source code, scripts, notebooks, and
-documentation contained in this repository. The dataset files distributed via
-Harvard Dataverse are licensed separately under the Creative Commons
-Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) license, subject to
-the Data Use Agreement presented on the Dataverse dataset page. See
-LICENSE-DATA.md for the data-licensing summary.
+Dataset files are governed separately by the data-access terms documented in
+[`LICENSE-DATA.md`](./LICENSE-DATA.md), which are also TBD until public release.

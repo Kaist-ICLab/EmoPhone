@@ -12,10 +12,10 @@ The CrossUserDataset ships with a **three-tier benchmark framework** that progre
 
 Each tier has its own README with the exact split definition, eligibility filters, and replication entry points:
 
-- `[tier_a/README.md](./tier_a/README.md)` — personal-history predictability (temporal split).
-- `[tier_b/README.md](./tier_b/README.md)` — stratified group 5-fold across users.
-- `[tier_c/README.md](./tier_c/README.md)` — leave-one-dataset-out across waves.
-- `[utils/README.md](./utils/README.md)` — shared loader / metric contract.
+- [tier_a/README.md](./tier_a/README.md) — personal-history predictability (temporal split).
+- [tier_b/README.md](./tier_b/README.md) — stratified group 5-fold across users.
+- [tier_c/README.md](./tier_c/README.md) — leave-one-dataset-out across waves.
+- [utils/README.md](./utils/README.md) — shared loader / metric contract.
 
 ---
 
@@ -23,8 +23,8 @@ Each tier has its own README with the exact split definition, eligibility filter
 
 The `benchmark/` folder holds the **contract and documentation** for each tier. The runnable experiment code sits in two top-level folders:
 
-- `[../basemodel-benchmarking/](../basemodel-benchmarking/)` — baseline models (XGBoost, LightGBM, MLP, ResNet) and tabular neural networks (TabNet, SAINT, TabTransformer, FTTransformer, DCN). Used across Tier A, Tier B, and Tier C.
-- `[../domain_adaptation/](../domain_adaptation/)` — domain-generalisation (DG) and domain-adaptation (DA) baselines. Used in Tier B and Tier C.
+- [../basemodel-benchmarking/](../basemodel-benchmarking/) — baseline models (XGBoost, LightGBM, MLP, ResNet) and tabular neural networks (TabNet, SAINT, TabTransformer, FTTransformer, DCN). Used across Tier A, Tier B, and Tier C.
+- [../domain_adaptation/](../domain_adaptation/) — domain-generalisation (DG) and domain-adaptation (DA) baselines. Used in Tier B and Tier C.
 
 Each tier README points into the appropriate subdirectory for replication.
 
@@ -101,7 +101,7 @@ All models share a unified training loop (see [Shared implementation details](#s
 | **CGDM**      | Cross-domain gradient-discrepancy minimisation.        |
 
 
-For upstream provenance of each family, see `[../domain_adaptation/README.md](../domain_adaptation/README.md)` and `[../basemodel-benchmarking/README.md](../basemodel-benchmarking/README.md)`.
+For upstream provenance of each family, see [../domain_adaptation/README.md](../domain_adaptation/README.md) and [../basemodel-benchmarking/README.md](../basemodel-benchmarking/README.md).
 
 ---
 
@@ -126,18 +126,17 @@ All tiers follow a unified three-stage evaluation pipeline:
 
 ## Replicating the benchmark
 
-1. Download the data (see `[../data/README.md](../data/README.md)`) and unpack into `data/D1/`, `data/D2/`, `data/D3/`.
+1. Download the data (see [../data/README.md](../data/README.md)) and unpack into `data/D1/`, `data/D2/`, `data/D3/`.
 2. Install dependencies: `pip install -r ../requirements.txt`.
 3. Pick a tier and run its entry script (per-tier READMEs).
-4. Summary results will be written into `[results/](./results/)` (or the tier's own output folder) and aggregated by the scripts referenced in each tier README.
+4. Summary results will be written into [results/](./results/) (or the tier's own output folder) and aggregated by the scripts referenced in each tier README.
 
 ---
 
 ## Results
 
-Per-task summary CSVs (AUROC, Accuracy, Macro-F1, Precision, Recall) are committed to `[results/](./results/)` once populated. They mirror the tables reported in Appendix C of the paper:
+Per-task summary CSVs (AUROC, Accuracy, Macro-F1, Precision, Recall) are committed to [results/](./results/) once populated. They mirror the tables reported in Appendix C of the paper:
 
 - Tier A → `results/tier_a_full.csv`
 - Tier B → `results/tier_b_baseline_tabular.csv`, `results/tier_b_dg.csv`, `results/tier_b_da.csv`, `results/tier_b_category_best.csv`
 - Tier C → `results/tier_c_baseline_tabular.csv`, `results/tier_c_dg.csv`, `results/tier_c_da.csv`
-

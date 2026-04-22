@@ -20,9 +20,9 @@ A reviewer-facing checklist that pre-answers the standard Datasets and Benchmark
 
 | Requirement | Status | Location |
 |---|---|---|
-| **Code license** clearly stated | ✓ (MIT) | [`../LICENSE`](../LICENSE) |
-| **Data license** clearly stated | ✓ (CC BY-NC 4.0 + DUA) | [`../LICENSE-DATA.md`](../LICENSE-DATA.md) |
-| License applicability distinguished (code vs data) | ✓ | `../LICENSE` has a "NOTE ON DATA LICENSING" section; `../LICENSE-DATA.md` lives separately |
+| **Code license** clearly stated | TBD on acceptance/public release | [`../LICENSE`](../LICENSE) |
+| **Data license** clearly stated | TBD on acceptance/public release | [`../LICENSE-DATA.md`](../LICENSE-DATA.md) |
+| License applicability distinguished (code vs data) | ✓ | Code and data placeholders live in separate files |
 
 ## Hosting and persistent identifier
 
@@ -90,6 +90,7 @@ The following placeholders will be populated on paper acceptance (they are held 
 - IRB number and institution ([`../DATASHEET.md`](../DATASHEET.md), [`../RESPONSIBILITY.md`](../RESPONSIBILITY.md), [`./ethics.md`](./ethics.md)).
 - Harvard Dataverse DOI and file IDs ([`../metadata/croissant.json`](../metadata/croissant.json), [`../CITATION.cff`](../CITATION.cff), [`../README.md`](../README.md)).
 - Contact email ([`../README.md`](../README.md), [`../DATASHEET.md`](../DATASHEET.md), [`../MAINTENANCE.md`](../MAINTENANCE.md), [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`../RESPONSIBILITY.md`](../RESPONSIBILITY.md)).
+- Code and data licenses / DUA terms ([`../LICENSE`](../LICENSE), [`../LICENSE-DATA.md`](../LICENSE-DATA.md), [`../CITATION.cff`](../CITATION.cff)).
 - Full translated consent form ([`./consent_form_en.md`](./consent_form_en.md)).
 - Committed benchmark result CSVs (headers present; rows populated once production runs are committed; see [`../benchmark/results/README.md`](../benchmark/results/README.md)).
 - SHA256 / MD5 checksums for the Dataverse archives ([`../metadata/checksums.md5`](../metadata/checksums.md5)).

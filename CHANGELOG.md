@@ -23,6 +23,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - `data/README.md` and `data/schema.md` reconciled: pkl files are now consistently documented as 5-element tuples (`features, y, groups, t, datetimes`), label filenames are lowercase (`valence.pkl`, `mental.pkl`, `valenceChange.pkl`, …), and feature-column counts are corrected (`8,037 / 10,122 / 10,581` total; `7,961 / 10,102 / 10,550` after `PIF#` removal).
 - `EDA/utils.py` and `EDA/README.md` updated to reflect the released `D1 / D2 / D3` folder naming on disk while keeping internal dict keys as `D-1 / D-2 / D-3` for notebook compatibility.
 - `.gitignore` patched to whitelist documentation assets (`images/*.png`, `metadata/checksums.md5`, `benchmark/results/*.csv|*.json`).
+- License, data-access, and citation metadata now keep code license, data license, DUA terms, authors, and final dataset/paper names explicitly marked as TBD until public release.
+- README visuals expanded with preserved study-design, coverage, temporal-label, and embedding figures under [`images/`](./images/).
+- EDA notebook directory casing normalised from `eda/` to `EDA/` to match documentation links.
 
 ### Deprecated
 - The placeholder `[DATASET_NAME]` strings across older drafts are no longer used; the working name is `CrossUserDataset` pending final naming on acceptance.

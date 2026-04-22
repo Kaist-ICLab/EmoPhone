@@ -2,15 +2,15 @@
 
 > A three-wave in-the-wild smartphone and wearable sensing dataset for moment-level affect modeling in everyday life.
 
-[![License: MIT (code)](https://img.shields.io/badge/Code-MIT-blue)](./LICENSE)
-[![License: CC BY-NC 4.0 (data)](https://img.shields.io/badge/Data-CC%20BY--NC%204.0-blue)](./LICENSE-DATA.md)
+[![Code License](https://img.shields.io/badge/Code%20license-TBD-lightgrey)](./LICENSE)
+[![Data Terms](https://img.shields.io/badge/Data%20terms-TBD-lightgrey)](./LICENSE-DATA.md)
 [![DOI](https://img.shields.io/badge/DOI-TBD%20on%20acceptance-lightgrey)](#citation)
 [![Paper](https://img.shields.io/badge/Paper-NeurIPS%202026%20D%26B-green)](#citation)
 [![Datasheet](https://img.shields.io/badge/Docs-Datasheet-orange)](./DATASHEET.md)
 [![Croissant](https://img.shields.io/badge/Metadata-Croissant-7f52b5)](./metadata/croissant.json)
 [![Harvard Dataverse](https://img.shields.io/badge/Data-Harvard%20Dataverse-red)](#data-access)
 
-> **Dataset name and DOI are finalised on acceptance.** This repository uses the working name `CrossUserDataset`; the published dataset name will be substituted throughout before release. See the paper's proposed names for context (e.g., COPE, Cross-K, DAMP).
+> **Dataset name, DOI, paper title, authors, and licenses are finalized on acceptance/public release.** This repository uses the working name `CrossUserDataset`; final names and legal terms will be substituted throughout before release.
 
 ---
 
@@ -26,28 +26,22 @@ Together, the three waves provide **53,139 ESM responses** from **297 participan
 - Cross-dataset (cross-wave) transfer-learning experiments
 - Longitudinal and individual-difference analyses in mobile affective computing
 
+![Study design and sensing protocol](images/study_design_protocol.png)
+
 ---
 
 ## Dataset at a Glance
 
-| Property | D1 | D2 | D3 |
-|---|---|---|---|
-| **Collection period** | Feb 7 – Apr 2, 2020 (~30 d) | Dec 7, 2020 – Jan 27, 2021 (~30 d) | Nov 23, 2021 – Jan 11, 2022 (~28 d) |
-| **Recruited / retained (QC)** | 102 / 92 | 112 / 99 | 114 / 106 |
-| **ESM responses (post-QC)** | 10,259 | 21,042 | 21,838 |
-| **Mean responses / participant** | 111.5 (SD 51.1) | 212.5 (SD 44.1) | 206.0 (SD 24.7) |
-| **Smartphone** | Android ≥ 7.0 | Android ≥ 8.0 | Android ≥ 8.0 |
-| **Wearable** | Fitbit Inspire HR + Polar H10 (sub-period) | Fitbit Inspire HR + Polar H10 (sub-period) | Fitbit Inspire HR only |
-| **Feature columns (total)** | 8,037 | 10,122 | 10,581 |
-| **Shared labels** | Valence, Arousal, Stress, Disturbance | Valence, Arousal, Stress, Disturbance | Valence, Arousal, Stress, Disturbance |
-| **Wave-specific labels** | Attention, Mental, Duration, Change | Attention, Mental, Duration, ValenceChange, ArousalChange | 8 PANAS-style words (Happy, Relaxed, Cheerful, Content, Sad, Anxious, Depressed, Angry) |
-
 ![Summary of Dataset Characteristics](images/table.png)
+
+![Sensor and label coverage matrix](images/sensor_label_matrix.png)
 
 **Shared core labels** (7-point scale, −3 to +3; Stress/Disturbance are 0 to +6 in D3 and normalised to −3/+3 in the benchmark):
 Valence, Arousal, Stress, Task Disturbance.
 
 **D3 affect-word labels** (0 to +6): Happy, Relaxed, Cheerful, Content, Sad, Anxious, Depressed, Angry.
+
+![Temporal distribution of ESM labels](images/temporal_distribution_ESM_labels.png)
 
 See [`data/schema.md`](./data/schema.md) for the full label reference and the column-naming convention.
 
@@ -64,6 +58,10 @@ See [`data/schema.md`](./data/schema.md) for the full label reference and the co
 All tiers use **AUROC** as the primary metric with Accuracy / Macro-F1 / Precision / Recall reported for diagnostics. Hyperparameters are tuned with **Optuna (30 trials, validation-AUROC selection)**; training uses a unified loop (≤ 50 epochs, patience-based early stopping, fixed seed).
 
 See [`benchmark/README.md`](./benchmark/README.md) for tier-level details and reproduction pointers.
+
+![Cross-user embedding structure](images/TSNE_cross_user.png)
+
+![Cross-wave embedding structure](images/TSNE_cross_wave.png)
 
 ### Benchmark Model Inventory
 
@@ -93,8 +91,8 @@ CrossUserDataset/
 │
 ├── README.md                         ← this file
 ├── DATASHEET.md                      ← Gebru-style datasheet (NeurIPS D&B requirement)
-├── LICENSE                           ← MIT for code
-├── LICENSE-DATA.md                   ← CC BY-NC 4.0 summary + link to Dataverse DUA
+├── LICENSE                           ← code license placeholder (TBD)
+├── LICENSE-DATA.md                   ← data license / DUA placeholder (TBD)
 ├── CITATION.cff                      ← machine-readable citation
 ├── AUTHORS.md                        ← contributors
 ├── RESPONSIBILITY.md                 ← NeurIPS D&B author responsibility statement
@@ -142,7 +140,7 @@ CrossUserDataset/
 
 ## Data Access
 
-The dataset is hosted on **Harvard Dataverse** with gated access. Users must log in, agree to the Data Use Agreement (DUA), and then download. No manual approval step: agreement to terms grants immediate access.
+The planned release target is **Harvard Dataverse** with gated access. Users will log in, agree to the Data Use Agreement (DUA), and then download. The final landing page, file IDs, DOI, license, and DUA text will be populated on acceptance/public release.
 
 **To download:**
 1. Visit the dataset page at **[TBD Harvard Dataverse URL — populated on acceptance]**.
@@ -224,8 +222,8 @@ See [`CITATION.cff`](./CITATION.cff) for the machine-readable form.
 
 ## License and Ethics
 
-- **Code** in this repository is released under the [MIT License](./LICENSE).
-- **Data** on Harvard Dataverse is released under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/); see [`LICENSE-DATA.md`](./LICENSE-DATA.md) and the Dataverse DUA.
+- **Code license:** TBD; see [`LICENSE`](./LICENSE).
+- **Data license and DUA:** TBD; see [`LICENSE-DATA.md`](./LICENSE-DATA.md).
 
 All data collection was approved by the Institutional Review Board at **[TBD institution]** (approval number **[TBD]**). Participants provided written informed consent and received ~100 USD compensation. Anonymisation applied prior to release: MD5-hashed contact numbers, UUID-replaced Wi-Fi/Bluetooth MAC addresses, per-participant random displacement of GPS longitude. See [`docs/ethics.md`](./docs/ethics.md) and [`DATASHEET.md`](./DATASHEET.md) § 2.
 

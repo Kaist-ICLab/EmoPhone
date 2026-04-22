@@ -9,17 +9,16 @@
 The authors of this dataset and accompanying codebase confirm the following:
 
 1. **Rights and licensing.**
-   - We have the right to release the dataset and the accompanying code under the licenses declared in this repository (MIT for code; CC BY-NC 4.0 for data; see [`LICENSE`](./LICENSE) and [`LICENSE-DATA.md`](./LICENSE-DATA.md)).
-   - Participants gave written informed consent explicitly covering research use, third-party sharing for academic research under a Data Use Agreement, and long-term archival on Harvard Dataverse.
+   - We have the right to release the dataset and the accompanying code under the final licenses declared before public release; the current license files are placeholders (see [`LICENSE`](./LICENSE) and [`LICENSE-DATA.md`](./LICENSE-DATA.md)).
+   - Participants gave written informed consent covering research use, third-party sharing for academic research under a Data Use Agreement, and long-term archival on Harvard Dataverse.
 
 2. **Responsibility for violations.**
    - **The authors bear all responsibility in case of violation of rights**, including but not limited to privacy rights, data-protection regulations, intellectual-property rights, or the terms of the Data Use Agreement. We accept liability for any claims arising from the release of this dataset.
    - Users of the dataset are bound by the Data Use Agreement accepted at download time; user-side violations do not transfer liability back to the authors provided the authors have complied with their disclosure obligations.
 
 3. **License confirmation.**
-   - Dataset files distributed via Harvard Dataverse are licensed under **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**, augmented by the project-specific Data Use Agreement.
-   - Source code, scripts, and documentation in this GitHub repository are licensed under the **MIT License**.
-   - Both licenses are permissive for academic research; commercial use is prohibited by the data license.
+   - Dataset license, repository code license, and project-specific DUA terms are **TBD** and will be finalized before public release.
+   - Until the final license files are populated, this repository should be treated as pre-release research material.
 
 4. **Ethics and IRB oversight.**
    - All data collection was approved by the Institutional Review Board at **[TBD institution on acceptance]** under approval number **[TBD on acceptance]**.

@@ -17,7 +17,7 @@ Thank you for your interest in contributing to the **CrossUserDataset** reposito
 ### Requires author coordination (email first)
 
 - **Dataset-level changes** — new labels, new waves, new participant recruitment, label corrections, new anonymisation steps. These require IRB review and a new Dataverse revision.
-- **Licensing changes** — both MIT and CC BY-NC 4.0 are fixed. Any deviation requires author discussion.
+- **Licensing changes** — code and data licenses are TBD until public release. Any license-related change requires author discussion.
 - **Schema-breaking changes** — renaming columns, changing pkl tuple structure, dropping labels.
 
 Email **[TBD contact email on acceptance]** before submitting PRs in this category.

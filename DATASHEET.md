@@ -204,7 +204,7 @@ Data files are hosted on **Harvard Dataverse** at **[TBD Dataverse URL on accept
 Upon acceptance of the accompanying NeurIPS paper. The dataset will remain accessible on Harvard Dataverse in perpetuity; Dataverse provides long-term preservation guarantees and a persistent DOI.
 
 **Will the dataset be distributed under a copyright or other intellectual property (IP) license, and/or under applicable terms of use?**
-Yes. Dataset files are released under **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**, restricting use to non-commercial academic research. The full Data Use Agreement is presented to users on the Harvard Dataverse page prior to download. Code and documentation in this GitHub repository are released under the [MIT License](./LICENSE). See [`LICENSE-DATA.md`](./LICENSE-DATA.md).
+Yes, but the final dataset license, repository code license, and Data Use Agreement text are **[TBD on acceptance/public release]**. The full Data Use Agreement will be presented to users on the Harvard Dataverse page prior to download. See [`LICENSE`](./LICENSE) and [`LICENSE-DATA.md`](./LICENSE-DATA.md).
 
 **Have any third parties imposed IP-based or other restrictions on the data?**
 No, aside from the IRB-mandated privacy protections already applied (contact-number hashing, MAC-address anonymisation, GPS longitude displacement).

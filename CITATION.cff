@@ -15,8 +15,7 @@ date-released: "TBD"  # populated on NeurIPS acceptance / Dataverse publication
 doi: "TBD"            # Harvard Dataverse DOI
 url: "TBD"            # Dataverse landing page
 repository-code: "https://github.com/TBD-org/CrossUserDataset"
-license: CC-BY-NC-4.0
-license-url: "https://creativecommons.org/licenses/by-nc/4.0/"
+license: "TBD"      # finalized before public release
 keywords:
   - affective computing
   - mobile sensing

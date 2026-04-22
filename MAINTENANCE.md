@@ -10,8 +10,8 @@ This document states the maintenance, versioning, and long-term-support commitme
 |---|---|---|
 | Dataset files (D1 / D2 / D3 archives) | Harvard Dataverse | DOI (assigned on publication) |
 | Documentation, schema, benchmark scaffolding | GitHub | Repository URL (this repo) |
-| Code licenses | GitHub (MIT in [`LICENSE`](./LICENSE)) | — |
-| Data licenses | Harvard Dataverse DUA + CC BY-NC 4.0 | DOI-anchored |
+| Code license | GitHub ([`LICENSE`](./LICENSE), TBD before public release) | — |
+| Data license / DUA | Harvard Dataverse ([`LICENSE-DATA.md`](./LICENSE-DATA.md), TBD before public release) | DOI-anchored |
 
 Harvard Dataverse provides:
 

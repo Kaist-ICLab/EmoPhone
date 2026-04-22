@@ -52,7 +52,7 @@ Access to the data requires agreement to the DUA presented on the Harvard Datave
 | Re-identification via location pattern | Low | High | Longitude displacement; restrict to academic research via DUA; no raw GPS released |
 | Re-identification via device cross-reference | Very low | Medium | MAC address UUID replacement; hashed contact numbers |
 | Re-identification via rare demographics | Low | Medium | Homogeneous cohort; no free-text; `PIF#` features are coarse (BFI subscales, age in years, gender M/F) |
-| Unauthorised commercial use | Low | Medium | CC BY-NC 4.0 + DUA; commercial use explicitly prohibited |
+| Unauthorised commercial use | Low | Medium | Final license / DUA terms TBD; intended DUA will prohibit misuse |
 | Surveillance / profiling | Low | High | DUA prohibits; incident reporting channel in [`../RESPONSIBILITY.md`](../RESPONSIBILITY.md) |
 | Inference of mental-health status | Medium | Medium | No individual-level predictions shipped; paper discusses limitations of the underlying labels; no direct PHI leakage |
 

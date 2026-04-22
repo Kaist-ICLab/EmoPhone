@@ -23,6 +23,10 @@ env/
 .archive/
 **/.archive/
 
+# Local paper and planning drafts used during repo preparation
+_NeurIPS__26__Evaluation___Dataset_Track/
+Dataset_Doc_Personalization*.md
+
 # Jupyter / EDA generated artifacts
 *.html
 *.xlsx
