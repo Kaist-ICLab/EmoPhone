@@ -26,22 +26,31 @@ Together, the three waves provide **53,139 ESM responses** from **297 participan
 - Cross-dataset (cross-wave) transfer-learning experiments
 - Longitudinal and individual-difference analyses in mobile affective computing
 
-![Study design and sensing protocol](images/study_design_protocol.png)
+<p align="center">
+  <img src="images/study_design_protocol.png" alt="Three-wave sensing and ESM protocol overview" width="820">
+</p>
+<p align="center"><em>Figure 1. Three-wave study protocol, sensing streams, and ESM label evolution.</em></p>
 
 ---
 
 ## Dataset at a Glance
 
-![Summary of Dataset Characteristics](images/table.png)
-
-![Sensor and label coverage matrix](images/sensor_label_matrix.png)
+| Property | D1 | D2 | D3 |
+|---|---|---|---|
+| **Collection period** | Feb 7 - Apr 2, 2020 (~30 d) | Dec 7, 2020 - Jan 27, 2021 (~30 d) | Nov 23, 2021 - Jan 11, 2022 (~28 d) |
+| **Recruited / retained (QC)** | 102 / 92 | 112 / 99 | 114 / 106 |
+| **ESM responses (post-QC)** | 10,259 | 21,042 | 21,838 |
+| **Mean responses / participant** | 111.5 (SD 51.1) | 212.5 (SD 44.1) | 206.0 (SD 24.7) |
+| **Smartphone** | Android >= 7.0 | Android >= 8.0 | Android >= 8.0 |
+| **Wearable** | Fitbit Inspire HR + Polar H10 (sub-period) | Fitbit Inspire HR + Polar H10 (sub-period) | Fitbit Inspire HR only |
+| **Feature columns (total)** | 8,037 | 10,122 | 10,581 |
+| **Shared labels** | Valence, Arousal, Stress, Disturbance | Valence, Arousal, Stress, Disturbance | Valence, Arousal, Stress, Disturbance |
+| **Wave-specific labels** | Attention, Mental, Duration, Change | Attention, Mental, Duration, ValenceChange, ArousalChange | 8 PANAS-style words (Happy, Relaxed, Cheerful, Content, Sad, Anxious, Depressed, Angry) |
 
 **Shared core labels** (7-point scale, −3 to +3; Stress/Disturbance are 0 to +6 in D3 and normalised to −3/+3 in the benchmark):
 Valence, Arousal, Stress, Task Disturbance.
 
 **D3 affect-word labels** (0 to +6): Happy, Relaxed, Cheerful, Content, Sad, Anxious, Depressed, Angry.
-
-![Temporal distribution of ESM labels](images/temporal_distribution_ESM_labels.png)
 
 See [`data/schema.md`](./data/schema.md) for the full label reference and the column-naming convention.
 
@@ -59,10 +68,6 @@ All tiers use **AUROC** as the primary metric with Accuracy / Macro-F1 / Precisi
 
 See [`benchmark/README.md`](./benchmark/README.md) for tier-level details and reproduction pointers.
 
-![Cross-user embedding structure](images/TSNE_cross_user.png)
-
-![Cross-wave embedding structure](images/TSNE_cross_wave.png)
-
 ### Benchmark Model Inventory
 
 **Baselines**: XGBoost, LightGBM, MLP, ResNet.
@@ -71,6 +76,27 @@ See [`benchmark/README.md`](./benchmark/README.md) for tier-level details and re
 **Domain adaptation (DA)**: DANN, CDAN, DAN, DeepCORAL, MCC, ADDA, MCD, JAN, SHOT, CBST, CGDM.
 
 DG and DA models share an MLP backbone so that family differences reflect the objective, not the backbone. DG methods follow DomainBed protocols; DA methods follow the Transfer-Learning-Library (TLL); tabular NNs follow their respective upstream repositories.
+
+## Figure Assets
+
+The README keeps the study-protocol figure inline and groups the remaining reviewer-facing visuals here so the main flow stays readable. All image assets live under [`images/`](./images/) with stable, lowercase filenames.
+
+<details>
+<summary>Open reviewer figure gallery</summary>
+
+| Dataset characteristics | Sensor and label coverage |
+|---|---|
+| <img src="images/dataset_characteristics.png" alt="Dataset characteristics table" width="390"> | <img src="images/sensor_label_matrix.png" alt="Sensor and label coverage matrix" width="390"> |
+
+| ESM response timing | Cross-user embedding structure |
+|---|---|
+| <img src="images/temporal_distribution_esm_labels.png" alt="Temporal distribution of ESM labels" width="390"> | <img src="images/tsne_cross_user.png" alt="Cross-user embedding structure" width="390"> |
+
+| Cross-wave embedding structure |
+|---|
+| <img src="images/tsne_cross_wave.png" alt="Cross-wave embedding structure" width="390"> |
+
+</details>
 
 ---
 
