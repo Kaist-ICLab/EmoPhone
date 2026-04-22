@@ -1,6 +1,8 @@
 # Exploratory Data Analysis (EDA)
 
-This folder contains the current EDA notebooks and shared helpers used to characterize the three-wave dataset (`D-1`, `D-2`, `D-3`).
+This folder contains the current EDA notebooks and shared helpers used to characterize the three-wave dataset.
+
+> **Naming convention.** On-disk folders use the released form `D1 / D2 / D3` (as documented in [`../data/README.md`](../data/README.md)). Inside the notebooks and `utils.py`, the internal keys `D-1 / D-2 / D-3` are used as dict keys and for figure labels. The `WAVE_TO_DIR` mapping in [`utils.py`](./utils.py) bridges the two. Keep the internal form when writing dict keys in new notebooks; keep the released form when writing filesystem paths.
 
 These notebooks are for dataset characterization and figure generation, not benchmark training/evaluation. For modeling benchmarks, see [`../benchmark/`](../benchmark/).
 
@@ -27,27 +29,29 @@ All notebooks use `get_data_root()` from `utils.py`. Resolution order:
 Expected wave directories:
 
 ```text
-${DATA_ROOT}/D-1
-${DATA_ROOT}/D-2
-${DATA_ROOT}/D-3
+${DATA_ROOT}/D1
+${DATA_ROOT}/D2
+${DATA_ROOT}/D3
 ```
 
 Core files expected by loaders:
 
-- `${DATA_ROOT}/D-*/EsmResponse.csv`
-- `${DATA_ROOT}/D-*/UserInfo.csv`
+- `${DATA_ROOT}/D*/EsmResponse.csv`
+- `${DATA_ROOT}/D*/UserInfo.csv`
 
-Sensor-feature pickle files expected by `load_df_X_combined()`:
+Legacy sensor-feature pickle files expected by `load_df_X_combined()`:
 
-- `${DATA_ROOT}/D-1/stress_binary_personal-full_D#2.pkl`
-- `${DATA_ROOT}/D-2/stress_binary_personal-full_D#3.pkl`
-- `${DATA_ROOT}/D-3/stress_binary_personal-full.pkl`
+- `${DATA_ROOT}/D1/stress_binary_personal-full_D#2.pkl`
+- `${DATA_ROOT}/D2/stress_binary_personal-full_D#3.pkl`
+- `${DATA_ROOT}/D3/stress_binary_personal-full.pkl`
+
+> These `stress_binary_personal-full*.pkl` files coexist with the per-label pickles (`{label}.pkl`) documented in [`../data/README.md`](../data/README.md). They predate the release layout and are retained because a few EDA notebooks still consume them. See `utils.py` for the authoritative path list.
 
 Additional files used by trait-profile cells in `overview.ipynb`:
 
-- `${DATA_ROOT}/D-1/full/{valence|arousal|stress|disturbance}_personal-full*.pkl`
-- `${DATA_ROOT}/D-2/full/{valence|arousal|stress|disturbance}_personal-full*.pkl`
-- `${DATA_ROOT}/D-3/full/{valence|arousal|stress|disturbance}_personal-full*.pkl`
+- `${DATA_ROOT}/D1/full/{valence|arousal|stress|disturbance}_personal-full*.pkl`
+- `${DATA_ROOT}/D2/full/{valence|arousal|stress|disturbance}_personal-full*.pkl`
+- `${DATA_ROOT}/D3/full/{valence|arousal|stress|disturbance}_personal-full*.pkl`
 
 ## Setup
 

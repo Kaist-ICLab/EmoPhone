@@ -13,11 +13,15 @@ import pandas as pd
 
 
 # ── Constants ──────────────────────────────────────────────────────────────────
+# Internal wave keys are kept as "D-1/D-2/D-3" because the notebooks use them
+# as dict keys and display labels. The on-disk folder structure (as documented
+# in ../data/README.md) is the non-hyphenated form "D1/D2/D3", mapped via
+# WAVE_TO_DIR below. Do not mix the two forms.
 GENDER_COLORS = {"M": "#4A90E2", "F": "#FF69B4"}
 COLORS = {"D-1": "#2C7BB6", "D-2": "#D7191C", "D-3": "#1A9641"}
 WAVE_LABELS = ["D-1 (2020)", "D-2 (2021)", "D-3 (2022)"]
 WAVE_KEYS = ["D-1", "D-2", "D-3"]
-WAVE_TO_DIR = {"D-1": "D-1", "D-2": "D-2", "D-3": "D-3"}
+WAVE_TO_DIR = {"D-1": "D1", "D-2": "D2", "D-3": "D3"}
 
 TRAIT_COLS = ["age", "openness", "conscientiousness", "neuroticism", "extraversion", "agreeableness", "pss10", "ghq12"]
 LABEL_NAMES = ["valence", "arousal", "stress", "disturbance"]
@@ -258,10 +262,15 @@ COVERAGE_BY_WAVE: dict[str, list[str]] = {
 
 
 # ── Path helpers ────────────────────────────────────────────────────────────────
+# These paths reference legacy sensor-only pickle files used by a few EDA
+# notebooks (stress_binary_personal-full). They live alongside the per-label
+# release pickles (`{label}.pkl`) documented in ../data/README.md. Disk paths
+# use the released D1/D2/D3 folder names while the dict keys use the internal
+# D-1/D-2/D-3 form to match WAVE_KEYS.
 _PKL_RELATIVE: dict[str, str] = {
-    "D-1": os.path.join("D-1", "stress_binary_personal-full_D#2.pkl"),
-    "D-2": os.path.join("D-2", "stress_binary_personal-full_D#3.pkl"),
-    "D-3": os.path.join("D-3", "stress_binary_personal-full.pkl"),
+    "D-1": os.path.join("D1", "stress_binary_personal-full_D#2.pkl"),
+    "D-2": os.path.join("D2", "stress_binary_personal-full_D#3.pkl"),
+    "D-3": os.path.join("D3", "stress_binary_personal-full.pkl"),
 }
 
 
