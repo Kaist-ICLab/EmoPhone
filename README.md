@@ -37,7 +37,7 @@ Together, the three waves provide **53,139 ESM responses** from **297 participan
 | **Shared labels** | Valence, Arousal, Stress, Disturbance | ← | ← |
 | **Additional labels** | Attention, MentalLoad, Duration, Change | Attention, MentalLoad, Duration, ChangedValence, ChangedArousal | PANAS-style affect words (8 items) | -->
 
-![Summary of Dataset Characteristics](images/table.png)
+![Summary of Dataset Characteristics](images/overview_table.png)
 
 **Shared core labels** (7-point scale, −3 to +3): Valence, Arousal, Stress, Task Disturbance  
 **D1/D2 additional labels** (−3 to +3): Attention, MentalLoad; D1 also has Change; D2 also has ChangedValence, ChangedArousal  
