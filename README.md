@@ -1,4 +1,4 @@
-# CrossUserDataset (D1–D3)
+# EmoPhone (D1–D3)
 
 > A three-wave in-the-wild smartphone and wearable sensing dataset for moment-level affect modeling in everyday life.
 
@@ -10,7 +10,7 @@
 [![Croissant](https://img.shields.io/badge/Metadata-Croissant-7f52b5)](./metadata/croissant.json)
 [![Harvard Dataverse](https://img.shields.io/badge/Data-Harvard%20Dataverse-red)](#data-access)
 
-> **Dataset name, DOI, paper title, authors, and licenses are finalized on acceptance/public release.** This repository uses the working name `CrossUserDataset`; final names and legal terms will be substituted throughout before release.
+> **Dataset name, DOI, paper title, authors, and licenses are finalized on acceptance/public release.** This repository uses the working name `EmoPhone`; final names and legal terms will be substituted throughout before release.
 
 ---
 
@@ -113,7 +113,7 @@ Per-wave QC thresholds, feature-alignment decisions, and scale-normalisation rul
 ## Repository Layout
 
 ```
-CrossUserDataset/
+EmoPhone/
 │
 ├── README.md                         ← this file
 ├── DATASHEET.md                      ← Gebru-style datasheet (NeurIPS D&B requirement)
@@ -222,7 +222,7 @@ md5sum -c metadata/checksums.md5
 ## Citation
 
 ```bibtex
-@inproceedings{crossuser2026,
+@inproceedings{emophone2026,
   title     = {[Dataset Title — TBD on acceptance]},
   author    = {[Author list — TBD on acceptance]},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
