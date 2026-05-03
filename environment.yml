@@ -1,0 +1,53 @@
+name: crossuser
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+
+  # Core scientific stack
+  - numpy>=1.24,<3.0
+  - pandas>=2.0,<3.0
+  - scipy>=1.10,<2.0
+
+  # Visualisation
+  - matplotlib>=3.7,<4.0
+  - seaborn>=0.12,<1.0
+  - plotly>=5.18,<6.0
+
+  # ML baselines + tabular helpers
+  - scikit-learn>=1.3,<2.0
+  - xgboost>=2.0,<3.0
+  - lightgbm>=4.0,<5.0
+  - imbalanced-learn>=0.11,<1.0
+
+  # Deep learning
+  - pytorch>=2.1,<3.0
+  - torchvision>=0.16,<1.0
+
+  # Hyperparameter optimisation
+  - optuna>=3.4,<5.0
+
+  # Manifold learning
+  - umap-learn>=0.5,<1.0
+
+  # Notebook runtime
+  - jupyterlab>=4.0,<5.0
+  - ipykernel>=6.0,<7.0
+
+  # Reproducibility helpers
+  - pyyaml>=6.0,<7.0
+  - tqdm>=4.65,<5.0
+
+  # Pip-only packages (not on conda-forge or pytorch channels)
+  - pip:
+      - pytorch-tabnet>=4.1,<5.0
+      - pytorch-widedeep>=1.4,<2.0
+      - deepctr-torch>=0.2,<1.0
+
+# NOTE ON DG / DA BACKBONES
+# DomainBed (DG) and Transfer-Learning-Library (DA) are integrated under
+# ../domain_adaptation/ and are not installed via conda/pip; see
+# domain_adaptation/README.md for upstream attribution.

@@ -1,8 +1,64 @@
 cff-version: 1.2.0
-message: "If you use this dataset, please cite it using the metadata below."
-title: "CrossUserDataset"
+message: "If you use this dataset or the accompanying benchmark code, please cite both the dataset entry and the NeurIPS paper below."
+title: "CrossUserDataset (D1–D3): a three-wave in-the-wild multimodal affective sensing dataset"
+abstract: >-
+  A three-wave, in-the-wild multimodal affective sensing resource combining
+  smartphone sensing, wearable sensing, and dense experience-sampling (ESM)
+  labels collected annually from 2020 to 2022. D1, D2, and D3 share a core
+  label space (valence, arousal, stress, task disturbance) and D3 additionally
+  provides PANAS-style affect-word labels. The release is accompanied by a
+  three-tier benchmark framework spanning personal-history predictability,
+  within-wave cross-user transfer, and cross-wave transfer.
+type: dataset
+version: "1.0.0"
+date-released: "TBD"  # populated on NeurIPS acceptance / Dataverse publication
+doi: "TBD"            # Harvard Dataverse DOI
+url: "TBD"            # Dataverse landing page
+repository-code: "https://github.com/TBD-org/CrossUserDataset"
+license: "TBD"      # finalized before public release
+keywords:
+  - affective computing
+  - mobile sensing
+  - wearable sensing
+  - experience sampling method
+  - emotion recognition
+  - stress detection
+  - longitudinal study
+  - in-the-wild
+  - domain generalization
+  - domain adaptation
 authors:
-  - name: "TODO"
-version: "TODO"
-date-released: "TODO"
-url: "TODO"
+  - family-names: "TBD"
+    given-names: "Author 1"
+    affiliation: "TBD institution"
+  # Add one entry per author before release; align ordering with the paper byline.
+preferred-citation:
+  type: conference-paper
+  title: "[Paper title — TBD on acceptance]"
+  authors:
+    - family-names: "TBD"
+      given-names: "Author 1"
+      affiliation: "TBD institution"
+  collection-title: "Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track"
+  year: 2026
+  doi: "TBD"
+  url: "TBD"
+references:
+  - type: article
+    title: "A Reproducible Stress Prediction Pipeline with Mobile Sensor Data"
+    authors:
+      - family-names: "Zhang"
+        given-names: "Panyu"
+      - family-names: "Jung"
+        given-names: "Gyuwon"
+      - family-names: "Alikhanov"
+        given-names: "Jumabek"
+      - family-names: "Ahmed"
+        given-names: "Uzair"
+      - family-names: "Lee"
+        given-names: "Uichin"
+    journal: "Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous Technologies"
+    volume: 8
+    issue: 3
+    year: 2024
+    doi: "10.1145/3678578"

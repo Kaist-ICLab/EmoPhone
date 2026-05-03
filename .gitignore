@@ -1,0 +1,66 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Local scratch / archives
+.archive/
+**/.archive/
+
+# Local paper and planning drafts used during repo preparation
+_NeurIPS__26__Evaluation___Dataset_Track/
+Dataset_Doc_Personalization*.md
+
+# Jupyter / EDA generated artifacts
+*.html
+*.xlsx
+*.csv
+*.pkl
+*.png
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Carve-outs: documentation assets and committed result templates we DO track.
+# These whitelist entries must come AFTER the wildcard ignores above.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Figures referenced by README.md, DATASHEET.md, and docs/*
+!images/
+!images/*.png
+
+# Integrity hashes for the Dataverse archives
+!metadata/checksums.md5
+
+# Benchmark result CSV / JSON templates (see benchmark/results/README.md)
+!benchmark/results/
+!benchmark/results/*.csv
+!benchmark/results/*.json
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Benchmark / experiment outputs (keep code, ignore outputs)
+# ──────────────────────────────────────────────────────────────────────────────
+basemodel-benchmarking/**/basemodel_benchmark_outputs/
+basemodel-benchmarking/**/runs/
+basemodel-benchmarking/**/latest/
+
+# Dataset files (downloaded locally; tracked docs live in data/)
+data/D1/
+data/D2/
+data/D3/
+data/full/
+data/processed/

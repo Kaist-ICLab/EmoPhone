@@ -1,0 +1,15 @@
+# CrossUserDataset archive checksums
+#
+# This file will be populated with the MD5 hashes of the D1 / D2 / D3 archives
+# at the time of public release on Harvard Dataverse. Format matches GNU md5sum
+# so that users can verify downloads with:
+#
+#   md5sum -c metadata/checksums.md5
+#
+# Each line will read:  <md5-hash>  <filename>
+#
+# Placeholders below will be replaced with real hashes on acceptance.
+
+TBD-on-acceptance  D1.zip
+TBD-on-acceptance  D2.zip
+TBD-on-acceptance  D3.zip

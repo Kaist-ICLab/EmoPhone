@@ -1,1 +1,12 @@
-TODO: Add license text.
+# Code License
+
+The code license for this repository is **TBD** and will be finalized before
+public release.
+
+Until a license is selected and this file is replaced with the final license
+text, this repository should be treated as pre-release research material. Do
+not redistribute, reuse, or relicense the code outside the collaboration context
+without written permission from the authors.
+
+Dataset files are governed separately by the data-access terms documented in
+[`LICENSE-DATA.md`](./LICENSE-DATA.md), which are also TBD until public release.
