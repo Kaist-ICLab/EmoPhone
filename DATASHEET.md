@@ -75,11 +75,11 @@ Yes. Sensor-data availability varies across participants due to:
 Yes. Each ESM response is linked to a participant identifier (`Pcode`) and trigger/response timestamps, enabling alignment with passive-sensor time series. Temporal ordering within and across waves is preserved via Unix timestamps (milliseconds, UTC).
 
 **Are there recommended data splits?**
-Yes. We provide a three-tier benchmark framework:
+Yes. We provide a three-setting benchmark framework:
 
-- **Tier A** (personal predictability): per-user 60/20/20 chronological split over the first 30 days.
-- **Tier B** (cross-user transfer): stratified group 5-fold cross-validation with `Pcode` as the group variable, per wave.
-- **Tier C** (cross-dataset transfer): leave-one-dataset-out (1→1 and 2→1) across waves, using the shared-label intersection and a harmonised common feature space.
+- **Setting A** (personal predictability): per-user 60/20/20 chronological split over the first 30 days.
+- **Setting B** (cross-user transfer): stratified group 5-fold cross-validation with `Pcode` as the group variable, per wave.
+- **Setting C** (cross-dataset transfer): leave-one-dataset-out (1→1 and 2→1) across waves, using the shared-label intersection and a harmonised common feature space.
 
 See [`benchmark/README.md`](./benchmark/README.md).
 
@@ -148,7 +148,7 @@ Specific QC and harmonisation steps applied to this dataset:
 - **Sensor QC**: Polar H10 ECG is available only for participants during their assigned sub-period in D1 and D2; ECG-derived features reflect this partial coverage.
 - **Label harmonisation**: Stress and Disturbance scales differ between D1/D2 (−3 to +3) and D3 (0 to +6). For cross-wave tasks, D3 Stress/Disturbance is shifted by −3. See [`preprocessing/pipeline_decisions.md`](./preprocessing/pipeline_decisions.md).
 - **Feature extraction**: statistical features computed across multiple time windows (current value, 15-min and 30-min immediate past, daily epochs yesterday/today), following Zhang et al. (2024).
-- **Cross-wave feature alignment** (Tier C only): alias-cleanup of inconsistent categorical label vocabularies (e.g., Korean / legacy CALL_CNT values in D1; `UNKNOWN` → `UNDEFINED` for `BAT_PLG#`; `NAVIGATION` added to `Notification_CAT` in D2/D3), and projection to the common-feature intersection between source and target waves. See [`docs/feature_alignment.md`](./docs/feature_alignment.md).
+- **Cross-wave feature alignment** (Setting C only): alias-cleanup of inconsistent categorical label vocabularies (e.g., Korean / legacy CALL_CNT values in D1; `UNKNOWN` → `UNDEFINED` for `BAT_PLG#`; `NAVIGATION` added to `Notification_CAT` in D2/D3), and projection to the common-feature intersection between source and target waves. See [`docs/feature_alignment.md`](./docs/feature_alignment.md).
 
 **Full reference:**
 Zhang, P., Jung, G., Alikhanov, J., Ahmed, U., & Lee, U. (2024). A Reproducible Stress Prediction Pipeline with Mobile Sensor Data. *Proc. ACM Interact. Mob. Wearable Ubiquitous Technol.* 8(3). https://doi.org/10.1145/3678578.
@@ -164,7 +164,7 @@ Yes. The preprocessing conventions, QC thresholds, and alias/feature-alignment d
 ## 5. Uses
 
 **Has the dataset been used for any tasks already?**
-Yes. The dataset was used in the accompanying NeurIPS paper to evaluate the three benchmark tiers (A: personal-history predictability, B: within-wave cross-user transfer, C: cross-wave transfer) across a model inventory comprising tree-based baselines (XGBoost, LightGBM), tabular neural networks (MLP, ResNet, TabNet, SAINT, TabTransformer, FTTransformer, DCN), domain-generalisation methods (IRM, VREx, GroupDRO, MixStyle, MLDG, MASF, Fish, CSD, SagNet), and domain-adaptation methods (DANN, CDAN, DAN, DeepCORAL, MCC, ADDA, MCD, JAN, SHOT, CBST, CGDM).
+Yes. The dataset was used in the accompanying NeurIPS paper to evaluate the three benchmark settings (A: personal-history predictability, B: within-wave cross-user transfer, C: cross-wave transfer) across a model inventory comprising tree-based baselines (XGBoost, LightGBM), tabular neural networks (MLP, ResNet, TabNet, SAINT, TabTransformer, FTTransformer, DCN), domain-generalisation methods (IRM, VREx, GroupDRO, MixStyle, MLDG, MASF, Fish, CSD, SagNet), and domain-adaptation methods (DANN, CDAN, DAN, DeepCORAL, MCC, ADDA, MCD, JAN, SHOT, CBST, CGDM).
 
 **What (other) tasks could the dataset be used for?**
 

@@ -1,8 +1,8 @@
 # Baseline & Tabular-NN Benchmarking
 
-This folder hosts the runnable code and outputs for the **baseline** and **tabular neural network** models used across Tier A, Tier B, and Tier C.
+This folder hosts the runnable code and outputs for the **baseline** and **tabular neural network** models used across Setting A, Setting B, and Setting C.
 
-> **Conceptual documentation lives in [`../benchmark/`](../benchmark/).** This folder is the implementation side; the `benchmark/` folder describes the protocol each tier expects.
+> **Conceptual documentation lives in [`../benchmark/`](../benchmark/).** This folder is the implementation side; the `benchmark/` folder describes the protocol each setting expects.
 
 ---
 
@@ -10,9 +10,9 @@ This folder hosts the runnable code and outputs for the **baseline** and **tabul
 
 Runs in this folder produce results for:
 
-- **Tier A** — personal-history temporal prediction ([`../benchmark/tier_a/README.md`](../benchmark/tier_a/README.md))
-- **Tier B** — within-dataset cross-user transfer (baseline + tabular-NN family only — DG/DA sit in [`../domain_adaptation/`](../domain_adaptation/)) ([`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md))
-- **Tier C** — cross-dataset transfer (baseline + tabular-NN family only) ([`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md))
+- **Setting A** — personal-history temporal prediction ([`../benchmark/setting_a/README.md`](../benchmark/setting_a/README.md))
+- **Setting B** — within-dataset cross-user transfer (baseline + tabular-NN family only — DG/DA sit in [`../domain_adaptation/`](../domain_adaptation/)) ([`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md))
+- **Setting C** — cross-dataset transfer (baseline + tabular-NN family only) ([`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md))
 
 ## Model inventory
 
@@ -45,11 +45,11 @@ basemodel-benchmarking/
 
 ## Running
 
-See the tier-level READMEs for the protocol:
+See the setting-level READMEs for the protocol:
 
-- Tier A: [`../benchmark/tier_a/README.md`](../benchmark/tier_a/README.md)
-- Tier B: [`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md)
-- Tier C: [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md)
+- Setting A: [`../benchmark/setting_a/README.md`](../benchmark/setting_a/README.md)
+- Setting B: [`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md)
+- Setting C: [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md)
 
 Dependencies are pinned in the repo root [`requirements.txt`](../requirements.txt).
 

@@ -1,6 +1,6 @@
 # Shared Benchmark Utilities
 
-This folder documents the **loader and metric contract** that every tier shares. The runnable helpers are distributed between [`../../basemodel-benchmarking/`](../../basemodel-benchmarking/) and [`../../domain_adaptation/`](../../domain_adaptation/); this folder is intentionally light and serves as the conceptual spec.
+This folder documents the **loader and metric contract** that every setting shares. The runnable helpers are distributed between [`../../basemodel-benchmarking/`](../../basemodel-benchmarking/) and [`../../domain_adaptation/`](../../domain_adaptation/); this folder is intentionally light and serves as the conceptual spec.
 
 ---
 
@@ -28,11 +28,11 @@ See `EDA.utils.load_and_attach` in [`../../EDA/utils.py`](../../EDA/utils.py) fo
 
 ### Required preprocessing steps
 
-All tiers should, before training:
+All settings should, before training:
 
 1. Drop leakage-prone columns (participant ID, raw label, timestamp).
 2. Apply `normalize_label_series` equivalent if the task is cross-wave.
-3. For Tier C: apply the alias map and intersect columns across waves (see [`../../preprocessing/feature_alignment.md`](../../preprocessing/feature_alignment.md)).
+3. For Setting C: apply the alias map and intersect columns across waves (see [`../../preprocessing/feature_alignment.md`](../../preprocessing/feature_alignment.md)).
 4. Fit any scaler / imputer on **train only**; apply to val/test unchanged.
 
 ---
@@ -47,21 +47,21 @@ All tiers should, before training:
 | Precision | Diagnostic | `sklearn.metrics.precision_score(average="binary")` |
 | Recall | Diagnostic | `sklearn.metrics.recall_score(average="binary")` |
 
-All metrics are computed on the tier-specific test set. Model selection uses validation AUROC.
+All metrics are computed on the setting-specific test set. Model selection uses validation AUROC.
 
 ---
 
 ## Seed and HPO policy
 
-- Fixed global seed for deterministic comparison (recorded per-run in each tier's output folder).
-- Optuna: 30 trials per (model, task, tier).
+- Fixed global seed for deterministic comparison (recorded per-run in each setting's output folder).
+- Optuna: 30 trials per (model, task, setting).
 - Training loop: ≤ 50 epochs, patience-based early stopping.
 
 ---
 
 ## Output contract
 
-Each tier writes one row per (wave | source, target | model | task) tuple with columns:
+Each setting writes one row per (wave | source, target | model | task) tuple with columns:
 
 ```
 tier, wave_or_source, target, task, model, family, n_train, n_val, n_test,

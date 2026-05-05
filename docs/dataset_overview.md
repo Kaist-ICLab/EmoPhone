@@ -88,7 +88,7 @@ See [`../data/schema.md`](../data/schema.md) for the raw column names and post-i
 
 ## 6. Benchmark framework
 
-The dataset ships with a **three-tier benchmark** (Tier A → Tier B → Tier C, progressively harder). See [`../benchmark/README.md`](../benchmark/README.md) for the full specification and [`../benchmark/tier_a/README.md`](../benchmark/tier_a/README.md), [`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md), [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md) for tier-level details.
+The dataset ships with a **three-setting benchmark** (Setting A → Setting B → Setting C, progressively harder). See [`../benchmark/README.md`](../benchmark/README.md) for the full specification and [`../benchmark/setting_a/README.md`](../benchmark/setting_a/README.md), [`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md), [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md) for setting-level details.
 
 ---
 

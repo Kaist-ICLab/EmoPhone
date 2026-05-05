@@ -9,7 +9,7 @@ Thank you for your interest in contributing to the **CrossUserDataset** reposito
 ### Welcome
 
 - **Documentation improvements** — clarifications, typo fixes, additional examples, broken-link repairs.
-- **Benchmark additions** — new baseline / DG / DA methods, new tier variants, new metrics. These must follow the loader / metric contract in [`benchmark/utils/README.md`](./benchmark/utils/README.md) and must not require re-releasing the dataset itself.
+- **Benchmark additions** — new baseline / DG / DA methods, new setting variants, new metrics. These must follow the loader / metric contract in [`benchmark/utils/README.md`](./benchmark/utils/README.md) and must not require re-releasing the dataset itself.
 - **Analysis notebooks** — additional EDA, domain-specific analyses, reproducibility sanity checks. Add under [`EDA/`](./EDA/) with a short README entry.
 - **Bug fixes** — in preprocessing documentation, benchmark code, or EDA utilities.
 - **Metadata updates** — Croissant schema tweaks, CITATION.cff updates, checksum regeneration.
@@ -69,7 +69,7 @@ To be merged, a new benchmark method must:
 2. **Use the unified training loop** (≤ 50 epochs, patience-based early stopping, fixed seed, 30 Optuna trials on validation AUROC).
 3. **Emit output rows** in the canonical schema: `tier, wave_or_source, target, task, model, family, n_train, n_val, n_test, acc, macro_f1, precision, recall, auroc, auroc_std, n_features_after_alignment`.
 4. **Include upstream attribution** — original paper citation, upstream implementation link, licence compatibility note.
-5. **Reproduce on D1 / D2 / D3** at least for one task on one tier. Summary AUROC should be committed to the matching CSV in `benchmark/results/`.
+5. **Reproduce on D1 / D2 / D3** at least for one task on one setting. Summary AUROC should be committed to the matching CSV in `benchmark/results/`.
 
 ---
 

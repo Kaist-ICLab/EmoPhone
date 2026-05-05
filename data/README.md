@@ -167,7 +167,7 @@ Unpacking order:
 |---|---|---|---|
 | `[0]` | `features` | `pd.DataFrame` | Feature matrix. Rows = ESM instances; columns = features (see [`schema.md`](./schema.md)). Includes static `PIF#*` participant-info columns broadcast to every row of that participant. |
 | `[1]` | `y` | `np.ndarray` | Binary label (0 / 1), derived from the raw label by median-split or task-specific thresholding. |
-| `[2]` | `groups` | `np.ndarray` | Participant codes (`Pcode`), one per row — used as the grouping variable in Tier B LOSO / group-K-fold splits. |
+| `[2]` | `groups` | `np.ndarray` | Participant codes (`Pcode`), one per row — used as the grouping variable in Setting B LOSO / group-K-fold splits. |
 | `[3]` | `t` | `np.ndarray` | Raw-label values (float) before binarisation, retained for regression or re-binarisation. |
 | `[4]` | `datetimes` | `np.ndarray` | Timestamps per row; datetime-like or Unix-ms — parse with `EDA.utils.parse_timestamp`. |
 
@@ -241,7 +241,7 @@ for label in core_labels:
     print(f"{label}: {features.shape}")
 ```
 
-### Load the same label across all three waves (for Tier C)
+### Load the same label across all three waves (for Setting C)
 
 ```python
 import pandas as pd
@@ -259,7 +259,7 @@ for wave in waves:
     groups_all.append(groups)
     wave_all.extend([wave] * len(y))
 
-# For Tier C, intersect columns across waves before concatenating:
+# For Setting C, intersect columns across waves before concatenating:
 common_cols = set.intersection(*(set(df.columns) for df in features_all))
 features_combined = pd.concat([df[list(common_cols)] for df in features_all],
                               ignore_index=True)
@@ -278,11 +278,11 @@ print(f"Common features: {len(common_cols)}; total instances: {len(y_combined)}"
 |---|---|---|---|
 | Polar H10 partial coverage | D1, D2 | ECG sensor rotated across participant subgroups in sub-periods | ECG-derived features reflect partial coverage; no ECG features in D3 |
 | Stress / Disturbance scale difference | D3 vs. D1/D2 | D1/D2: −3 to +3; D3: 0 to +6 | Normalise before cross-wave use (subtract 3 from D3) |
-| Keystroke events absent in D1 | D1 | `keyevent_*` block added from D2 onward | Tier C drops keyevent columns automatically via common-feature intersection |
-| Wi-Fi similarity absent in D3 | D3 | `WIFI_COS|JAC|EUC|MAN` skipped in D3 preprocessing | Same — dropped by Tier C intersection |
-| Fitness features absent in D1 | D1 | `FDI|FST|FCL|FAC` only produced for D2/D3 | Same — dropped by Tier C intersection |
-| `BAT_PLG#` categorical mismatch | D1 vs. D2/D3 | D1 emits `UNKNOWN`; D2/D3 emit `UNDEFINED` | Aliased in the Tier C alias map |
-| `CALL_CNT` legacy / Korean vocabulary | D1 | Includes `MAIN`, `PAGER`, `VOICE`, `기타`, `휴대전화`, `휴대폰` | Aliased to standardised English labels in the Tier C alias map |
-| `Notification_CAT` missing `NAVIGATION` | D1 | Added to `Notification_CAT` from D2 onward | Dropped by Tier C intersection |
+| Keystroke events absent in D1 | D1 | `keyevent_*` block added from D2 onward | Setting C drops keyevent columns automatically via common-feature intersection |
+| Wi-Fi similarity absent in D3 | D3 | `WIFI_COS|JAC|EUC|MAN` skipped in D3 preprocessing | Same — dropped by Setting C intersection |
+| Fitness features absent in D1 | D1 | `FDI|FST|FCL|FAC` only produced for D2/D3 | Same — dropped by Setting C intersection |
+| `BAT_PLG#` categorical mismatch | D1 vs. D2/D3 | D1 emits `UNKNOWN`; D2/D3 emit `UNDEFINED` | Aliased in the Setting C alias map |
+| `CALL_CNT` legacy / Korean vocabulary | D1 | Includes `MAIN`, `PAGER`, `VOICE`, `기타`, `휴대전화`, `휴대폰` | Aliased to standardised English labels in the Setting C alias map |
+| `Notification_CAT` missing `NAVIGATION` | D1 | Added to `Notification_CAT` from D2 onward | Dropped by Setting C intersection |
 
 For the full feature-alignment story and the alias map, see [`../docs/feature_alignment.md`](../docs/feature_alignment.md). For QC specifics, see [`../preprocessing/pipeline_decisions.md`](../preprocessing/pipeline_decisions.md).

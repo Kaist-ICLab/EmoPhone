@@ -1,8 +1,8 @@
 # Domain Generalization & Domain Adaptation
 
-This folder hosts the runnable code for the **domain generalisation (DG)** and **domain adaptation (DA)** baselines used in Tier B and Tier C.
+This folder hosts the runnable code for the **domain generalisation (DG)** and **domain adaptation (DA)** baselines used in Setting B and Setting C.
 
-> **Conceptual documentation lives in [`../benchmark/`](../benchmark/).** This folder is the implementation side; the `benchmark/` folder describes the protocol each tier expects.
+> **Conceptual documentation lives in [`../benchmark/`](../benchmark/).** This folder is the implementation side; the `benchmark/` folder describes the protocol each setting expects.
 
 ---
 
@@ -10,8 +10,8 @@ This folder hosts the runnable code for the **domain generalisation (DG)** and *
 
 Runs in this folder produce results for:
 
-- **Tier B** — within-dataset cross-user transfer, DG and DA families ([`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md)). "Domains" are user-clusters within a single wave.
-- **Tier C** — cross-dataset transfer, DG and DA families ([`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md)). Source / target domains are the waves themselves (1→1 and 2→1 settings).
+- **Setting B** — within-dataset cross-user transfer, DG and DA families ([`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md)). "Domains" are user-clusters within a single wave.
+- **Setting C** — cross-dataset transfer, DG and DA families ([`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md)). Source / target domains are the waves themselves (1→1 and 2→1 scenarios).
 
 Baseline and tabular-NN runs live in [`../basemodel-benchmarking/`](../basemodel-benchmarking/).
 
@@ -69,13 +69,13 @@ domain_adaptation/
 
 ## Running
 
-See the tier-level READMEs for the protocol:
+See the setting-level READMEs for the protocol:
 
-- Tier B: [`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md)
-- Tier C: [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md)
+- Setting B: [`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md)
+- Setting C: [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md)
 
 Dependencies are pinned in the repo root [`requirements.txt`](../requirements.txt).
 
 ## Outputs
 
-Summary tables aggregated from runs are written to [`../benchmark/results/tier_b_dg.csv`](../benchmark/results/), [`../benchmark/results/tier_b_da.csv`](../benchmark/results/), [`../benchmark/results/tier_c_dg.csv`](../benchmark/results/), [`../benchmark/results/tier_c_da.csv`](../benchmark/results/) using the output contract in [`../benchmark/utils/README.md`](../benchmark/utils/README.md).
+Summary tables aggregated from runs are written to [`../benchmark/results/tier_b_dg.csv`](../benchmark/results/), [`../benchmark/results/tier_b_da.csv`](../benchmark/results/), [`../benchmark/results/tier_c_dg.csv`](../benchmark/results/), [`../benchmark/results/tier_c_da.csv`](../benchmark/results/) using the output contract in [`../benchmark/utils/README.md`](../benchmark/utils/README.md). (CSV filenames retain their original `tier_*.csv` naming.)
