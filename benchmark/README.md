@@ -1,32 +1,32 @@
 # Benchmark
 
-The CrossUserDataset ships with a **three-tier benchmark framework** that progressively increases in difficulty and evaluates different facets of affect prediction under realistic mobile-sensing conditions.
+The CrossUserDataset ships with a **three-setting benchmark framework** that progressively increases in difficulty and evaluates different facets of affect prediction under realistic mobile-sensing conditions.
 
 
-| Tier  | Setting                             | What it asks                                                                                                                          | Method families                 |
-| ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| **A** | Personal-history predictability     | Can a user's **own** recent history predict their near-future affect state?                                                           | Baseline + tabular-NN           |
-| **B** | Within-dataset cross-user transfer  | Do models trained on some users generalise to **unseen users** from the same wave?                                                    | Baseline + tabular-NN + DG + DA |
-| **C** | Cross-dataset transfer across waves | Do models trained on one wave transfer to a **held-out wave** (different study conditions, label distributions, and sensor coverage)? | Baseline + tabular-NN + DG + DA |
+| Setting | Scenario                            | What it asks                                                                                                                          | Method families                 |
+| ------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **A**   | Personal-history predictability     | Can a user's **own** recent history predict their near-future affect state?                                                           | Baseline + tabular-NN           |
+| **B**   | Within-dataset cross-user transfer  | Do models trained on some users generalise to **unseen users** from the same wave?                                                    | Baseline + tabular-NN + DG + DA |
+| **C**   | Cross-dataset transfer across waves | Do models trained on one wave transfer to a **held-out wave** (different study conditions, label distributions, and sensor coverage)? | Baseline + tabular-NN + DG + DA |
 
 
-Each tier has its own README with the exact split definition, eligibility filters, and replication entry points:
+Each setting has its own README with the exact split definition, eligibility filters, and replication entry points:
 
-- [tier_a/README.md](./tier_a/README.md) — personal-history predictability (temporal split).
-- [tier_b/README.md](./tier_b/README.md) — stratified group 5-fold across users.
-- [tier_c/README.md](./tier_c/README.md) — leave-one-dataset-out across waves.
+- [setting_a/README.md](./setting_a/README.md) — personal-history predictability (temporal split).
+- [setting_b/README.md](./setting_b/README.md) — stratified group 5-fold across users.
+- [setting_c/README.md](./setting_c/README.md) — leave-one-dataset-out across waves.
 - [utils/README.md](./utils/README.md) — shared loader / metric contract.
 
 ---
 
 ## Where the runnable code lives
 
-The `benchmark/` folder holds the **contract and documentation** for each tier. The runnable experiment code sits in two top-level folders:
+The `benchmark/` folder holds the **contract and documentation** for each setting. The runnable experiment code sits in two top-level folders:
 
-- [../basemodel-benchmarking/](../basemodel-benchmarking/) — baseline models (XGBoost, LightGBM, MLP, ResNet) and tabular neural networks (TabNet, SAINT, TabTransformer, FTTransformer, DCN). Used across Tier A, Tier B, and Tier C.
-- [../domain_adaptation/](../domain_adaptation/) — domain-generalisation (DG) and domain-adaptation (DA) baselines. Used in Tier B and Tier C.
+- [../basemodel-benchmarking/](../basemodel-benchmarking/) — baseline models (XGBoost, LightGBM, MLP, ResNet) and tabular neural networks (TabNet, SAINT, TabTransformer, FTTransformer, DCN). Used across Setting A, Setting B, and Setting C.
+- [../domain_adaptation/](../domain_adaptation/) — domain-generalisation (DG) and domain-adaptation (DA) baselines. Used in Setting B and Setting C.
 
-Each tier README points into the appropriate subdirectory for replication.
+Each setting README points into the appropriate subdirectory for replication.
 
 ---
 
@@ -34,9 +34,9 @@ Each tier README points into the appropriate subdirectory for replication.
 
 **Shared core (all three waves):** Valence, Arousal, Stress, Task Disturbance — binarised HIGH / LOW at 0 on the harmonised [−3, +3] scale.
 
-**D3 rich affect-word labels (Tier A and Tier B only, within D3):** Happy, Relaxed, Cheerful, Content, Sad, Anxious, Depressed, Angry — binarised HIGH / LOW at 3 on the 0-to-6 scale.
+**D3 rich affect-word labels (Setting A and Setting B only, within D3):** Happy, Relaxed, Cheerful, Content, Sad, Anxious, Depressed, Angry — binarised HIGH / LOW at 3 on the 0-to-6 scale.
 
-**Tier C** is restricted to the shared core so that source and target waves share the same label space.
+**Setting C** is restricted to the shared core so that source and target waves share the same label space.
 
 ---
 
@@ -107,10 +107,10 @@ For upstream provenance of each family, see [../domain_adaptation/README.md](../
 
 ## Shared implementation details
 
-All tiers follow a unified three-stage evaluation pipeline:
+All settings follow a unified three-stage evaluation pipeline:
 
-1. **Split construction.** Train / validation / test splits are built per tier (see per-tier READMEs). Splits are **fixed across all compared methods**.
-2. **Hyperparameter tuning with Optuna.** 30 trials per (model, task, tier). Selection on **validation AUROC**. Training uses only train + validation; test is held out.
+1. **Split construction.** Train / validation / test splits are built per setting (see per-setting READMEs). Splits are **fixed across all compared methods**.
+2. **Hyperparameter tuning with Optuna.** 30 trials per (model, task, setting). Selection on **validation AUROC**. Training uses only train + validation; test is held out.
 3. **Evaluation on the predefined test split.** Report Accuracy, Macro-F1, Precision, Recall, and AUROC (primary).
 
 **Training loop (all model families):**
@@ -128,8 +128,8 @@ All tiers follow a unified three-stage evaluation pipeline:
 
 1. Download the data (see [../data/README.md](../data/README.md)) and unpack into `data/D1/`, `data/D2/`, `data/D3/`.
 2. Install dependencies: `pip install -r ../requirements.txt`.
-3. Pick a tier and run its entry script (per-tier READMEs).
-4. Summary results will be written into [results/](./results/) (or the tier's own output folder) and aggregated by the scripts referenced in each tier README.
+3. Pick a setting and run its entry script (per-setting READMEs).
+4. Summary results will be written into [results/](./results/) (or the setting's own output folder) and aggregated by the scripts referenced in each setting README.
 
 ---
 
@@ -137,6 +137,6 @@ All tiers follow a unified three-stage evaluation pipeline:
 
 Per-task summary CSVs (AUROC, Accuracy, Macro-F1, Precision, Recall) are committed to [results/](./results/) once populated. They mirror the tables reported in Appendix C of the paper:
 
-- Tier A → `results/tier_a_full.csv`
-- Tier B → `results/tier_b_baseline_tabular.csv`, `results/tier_b_dg.csv`, `results/tier_b_da.csv`, `results/tier_b_category_best.csv`
-- Tier C → `results/tier_c_baseline_tabular.csv`, `results/tier_c_dg.csv`, `results/tier_c_da.csv`
+- Setting A → `results/tier_a_full.csv`
+- Setting B → `results/tier_b_baseline_tabular.csv`, `results/tier_b_dg.csv`, `results/tier_b_da.csv`, `results/tier_b_category_best.csv`
+- Setting C → `results/tier_c_baseline_tabular.csv`, `results/tier_c_dg.csv`, `results/tier_c_da.csv`

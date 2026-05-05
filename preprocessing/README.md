@@ -15,7 +15,7 @@ The Zhang et al. (2024) pipeline organises preprocessing and modelling into **ei
 2. **Feature extraction** — derive per-sensor statistical features across fixed time windows (current, 15-min/30-min immediate past, yesterday/today epoch-level daily).
 3. **Feature preparation** — merge sensor streams, attach participant-info (`PIF#`) columns, one-hot categorical values.
 4. **Feature selection** — filter by variance / missingness / correlation as appropriate.
-5. **Data splitting** — temporal / cross-user / cross-dataset (tier-specific).
+5. **Data splitting** — temporal / cross-user / cross-dataset (setting-specific).
 6. **Resampling** — class-balancing (oversampling / undersampling) only on the training split if needed.
 7. **Model training** — unified training loop (Optuna HPO; see `benchmark/`).
 8. **Model evaluation** — AUROC primary, with Accuracy / Macro-F1 / Precision / Recall reported.
@@ -24,15 +24,15 @@ The pre-extracted `*.pkl` files in the public release capture the output of stag
 
 For the concrete parameter values used per wave and the known deviations, see [`pipeline_decisions.md`](./pipeline_decisions.md).
 
-For cross-wave feature alignment (Tier C), see [`feature_alignment.md`](./feature_alignment.md) (mirror of [`../docs/feature_alignment.md`](../docs/feature_alignment.md)).
+For cross-wave feature alignment (Setting C), see [`feature_alignment.md`](./feature_alignment.md) (mirror of [`../docs/feature_alignment.md`](../docs/feature_alignment.md)).
 
 ---
 
 ## Where the code lives
 
-- **Baseline + tabular-NN runs** (Tier A / Tier B): [`../basemodel-benchmarking/`](../basemodel-benchmarking/).
-- **DG + DA runs** (Tier B / Tier C): [`../domain_adaptation/`](../domain_adaptation/).
-- **Tier-level documentation**: [`../benchmark/`](../benchmark/).
+- **Baseline + tabular-NN runs** (Setting A / Setting B): [`../basemodel-benchmarking/`](../basemodel-benchmarking/).
+- **DG + DA runs** (Setting B / Setting C): [`../domain_adaptation/`](../domain_adaptation/).
+- **Setting-level documentation**: [`../benchmark/`](../benchmark/).
 - **EDA and characterisation**: [`../EDA/`](../EDA/).
 
 The preprocessing step that produces the `*.pkl` files from raw sensor streams is part of the Zhang et al. (2024) repository (linked above). Because raw sensor CSVs are not part of the public release, the public entry point into the pipeline is at the pkl boundary.
@@ -44,4 +44,4 @@ The preprocessing step that produces the `*.pkl` files from raw sensor streams i
 1. Download `D1.zip`, `D2.zip`, `D3.zip` from Harvard Dataverse (see [`../data/README.md`](../data/README.md)).
 2. Unpack into `data/D1`, `data/D2`, `data/D3` under the repo root (or set `DATA_ROOT` to point to your copy).
 3. Install dependencies from [`../requirements.txt`](../requirements.txt).
-4. Follow the tier-specific instructions in [`../benchmark/tier_a/README.md`](../benchmark/tier_a/README.md), [`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md), [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md).
+4. Follow the setting-specific instructions in [`../benchmark/setting_a/README.md`](../benchmark/setting_a/README.md), [`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md), [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md).

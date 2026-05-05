@@ -1,6 +1,6 @@
 # Cross-Wave Feature Alignment
 
-This document is the **authoritative record** of how the sensor-derived feature schema differs across D1, D2, and D3, and of the harmonisation policy used for cross-wave (Tier C) transfer.
+This document is the **authoritative record** of how the sensor-derived feature schema differs across D1, D2, and D3, and of the harmonisation policy used for cross-wave (Setting C) transfer.
 
 It mirrors [`../docs/feature_alignment.md`](../docs/feature_alignment.md); both are kept in sync so that readers discovering the repo via `preprocessing/` or `docs/` find the same content.
 
@@ -37,10 +37,10 @@ Removing `PIF#` (participant-info) narrows the diff but does **not** eliminate i
 
 ## 3. Harmonisation strategy
 
-Tier C applies the following strategy in order:
+Setting C applies the following strategy in order:
 
 1. **Alias unification** — rewrite categorical columns using a canonical vocabulary so that equivalent semantic values collapse to the same one-hot column (see [`pipeline_decisions.md`](./pipeline_decisions.md) § 6).
-2. **Common-feature intersection** — after alias unification, restrict to the set of columns present in every source and target wave for the current transfer setting.
+2. **Common-feature intersection** — after alias unification, restrict to the set of columns present in every source and target wave for the current transfer scenario.
 3. **Split-consistent scaling** — mean/variance computed on the (concatenated) training source; applied unchanged to validation and target.
 
 The expected outcome:
@@ -50,16 +50,16 @@ The expected outcome:
 
 ---
 
-## 4. How this interacts with the benchmark tiers
+## 4. How this interacts with the benchmark settings
 
-- **Tier A** (within-user): no alignment needed; uses the wave's native schema.
-- **Tier B** (within-wave cross-user): no alignment needed; per-wave schema.
-- **Tier C** (cross-wave): alias-unified + common-feature intersection, producing a wave-pair-specific schema. Documented per transfer setting in [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md).
+- **Setting A** (within-user): no alignment needed; uses the wave's native schema.
+- **Setting B** (within-wave cross-user): no alignment needed; per-wave schema.
+- **Setting C** (cross-wave): alias-unified + common-feature intersection, producing a wave-pair-specific schema. Documented per transfer scenario in [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md).
 
 ---
 
 ## 5. Open notes
 
 - `LOC_CLS#*` cluster IDs are not aligned across waves. Researchers wanting cross-wave location features should re-cluster raw GPS (not included in the public release).
-- `PIF#` features (age, gender, BFI, PSS, GHQ, PHQ) are semantically identical across waves but only D1 and D2 carry PHQ-9. PHQ columns are dropped for D3-inclusive Tier C intersections.
+- `PIF#` features (age, gender, BFI, PSS, GHQ, PHQ) are semantically identical across waves but only D1 and D2 carry PHQ-9. PHQ columns are dropped for D3-inclusive Setting C intersections.
 - The baseline for this alignment report originally compared internal pkls named `D-2 / D-3 / D-4`; those map to the released **D1 / D2 / D3** respectively. Column counts in this file use the released naming.

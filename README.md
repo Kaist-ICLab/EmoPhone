@@ -58,15 +58,15 @@ See [`data/schema.md`](./data/schema.md) for the full label reference and the co
 
 ## Benchmark Ladder
 
-| Tier | Setting | Evaluation | Method families |
+| Setting | Scenario | Evaluation | Method families |
 |---|---|---|---|
-| **Tier A** | Personal-history predictability | 60/20/20 chronological split per user (first 30 days), concatenated across users | Baseline + tabular-NN |
-| **Tier B** | Within-dataset cross-user transfer | Stratified group 5-fold by `Pcode`, evaluated per wave | Baseline + tabular-NN + DG + DA |
-| **Tier C** | Cross-dataset transfer across waves | Leave-one-dataset-out (1→1 and 2→1), shared labels only, common-feature intersection | Baseline + tabular-NN + DG + DA |
+| **Setting A** | Personal-history predictability | 60/20/20 chronological split per user (first 30 days), concatenated across users | Baseline + tabular-NN |
+| **Setting B** | Within-dataset cross-user transfer | Stratified group 5-fold by `Pcode`, evaluated per wave | Baseline + tabular-NN + DG + DA |
+| **Setting C** | Cross-dataset transfer across waves | Leave-one-dataset-out (1→1 and 2→1), shared labels only, common-feature intersection | Baseline + tabular-NN + DG + DA |
 
-All tiers use **AUROC** as the primary metric with Accuracy / Macro-F1 / Precision / Recall reported for diagnostics. Hyperparameters are tuned with **Optuna (30 trials, validation-AUROC selection)**; training uses a unified loop (≤ 50 epochs, patience-based early stopping, fixed seed).
+All settings use **AUROC** as the primary metric with Accuracy / Macro-F1 / Precision / Recall reported for diagnostics. Hyperparameters are tuned with **Optuna (30 trials, validation-AUROC selection)**; training uses a unified loop (≤ 50 epochs, patience-based early stopping, fixed seed).
 
-See [`benchmark/README.md`](./benchmark/README.md) for tier-level details and reproduction pointers.
+See [`benchmark/README.md`](./benchmark/README.md) for setting-level details and reproduction pointers.
 
 ### Benchmark Model Inventory
 
@@ -145,15 +145,15 @@ EmoPhone/
 │   └── feature_alignment.md          ← mirrors docs/feature_alignment.md
 │
 ├── benchmark/
-│   ├── README.md                     ← three-tier ladder + model inventory
-│   ├── tier_a/README.md              ← personal-history predictability
-│   ├── tier_b/README.md              ← within-wave cross-user transfer
-│   ├── tier_c/README.md              ← cross-wave transfer
+│   ├── README.md                     ← three-setting ladder + model inventory
+│   ├── setting_a/README.md           ← personal-history predictability
+│   ├── setting_b/README.md           ← within-wave cross-user transfer
+│   ├── setting_c/README.md           ← cross-wave transfer
 │   ├── utils/README.md               ← shared loader / metric contract
 │   └── results/                      ← committed per-task CSV/JSON summaries
 │
-├── basemodel-benchmarking/           ← Tier A/B/C baseline + tabular-NN runs (code + outputs)
-├── domain_adaptation/                ← Tier B/C DG + DA runs (code)
+├── basemodel-benchmarking/           ← Setting A/B/C baseline + tabular-NN runs (code + outputs)
+├── domain_adaptation/                ← Setting B/C DG + DA runs (code)
 │
 ├── EDA/                              ← dataset-characterisation notebooks
 ├── images/                           ← figures referenced by READMEs
@@ -212,10 +212,10 @@ md5sum -c metadata/checksums.md5
 
 - **Python**: 3.10 recommended; 3.9–3.11 supported.
 - **Install**: `pip install -r requirements.txt` (or `conda env create -f environment.yml`).
-- **Seeds**: all benchmark runs use a fixed seed (documented per tier in [`benchmark/tier_*/README.md`](./benchmark/)).
-- **HPO**: Optuna with **30 trials**, validation-AUROC selection, tier-specific validation split.
+- **Seeds**: all benchmark runs use a fixed seed (documented per setting in [`benchmark/setting_*/README.md`](./benchmark/)).
+- **HPO**: Optuna with **30 trials**, validation-AUROC selection, setting-specific validation split.
 - **Training loop**: maximum 50 epochs, patience-based early stopping, unified across baseline / DG / DA families.
-- **Split definitions**, preprocessing policy, and model-selection rule are held fixed across families within each tier.
+- **Split definitions**, preprocessing policy, and model-selection rule are held fixed across families within each setting.
 
 ---
 

@@ -213,4 +213,4 @@ One row per participant. Collected at onboarding and/or exit via questionnaire.
 
 ---
 
-*For wave-specific data-quality issues and preprocessing decisions, see [`../preprocessing/pipeline_decisions.md`](../preprocessing/pipeline_decisions.md). For cross-wave feature alignment (Tier C), see [`../docs/feature_alignment.md`](../docs/feature_alignment.md).*
+*For wave-specific data-quality issues and preprocessing decisions, see [`../preprocessing/pipeline_decisions.md`](../preprocessing/pipeline_decisions.md). For cross-wave feature alignment (Setting C), see [`../docs/feature_alignment.md`](../docs/feature_alignment.md).*

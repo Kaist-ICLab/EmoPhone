@@ -87,6 +87,6 @@ When a data-level update is required (e.g., a newly discovered preprocessing bug
 
 ## 7. Contribution pathway
 
-External contributions to the code, documentation, or benchmarking scaffolding are welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the PR workflow and review policy. Substantive contributions (e.g., new benchmark tier, new DG/DA method) are reviewed by the maintainer team and may be included in a minor release.
+External contributions to the code, documentation, or benchmarking scaffolding are welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the PR workflow and review policy. Substantive contributions (e.g., new benchmark setting, new DG/DA method) are reviewed by the maintainer team and may be included in a minor release.
 
 Contributions that affect the dataset content itself (new labels, corrections) must be coordinated with the authors by email.

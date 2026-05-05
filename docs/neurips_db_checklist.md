@@ -64,7 +64,7 @@ A reviewer-facing checklist that pre-answers the standard Datasets and Benchmark
 
 | Requirement | Status | Location |
 |---|---|---|
-| **Benchmark specification** (splits, filters, metrics) | ✓ (three tiers) | [`../benchmark/README.md`](../benchmark/README.md), [`../benchmark/tier_a/README.md`](../benchmark/tier_a/README.md), [`../benchmark/tier_b/README.md`](../benchmark/tier_b/README.md), [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md) |
+| **Benchmark specification** (splits, filters, metrics) | ✓ (three settings) | [`../benchmark/README.md`](../benchmark/README.md), [`../benchmark/setting_a/README.md`](../benchmark/setting_a/README.md), [`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md), [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md) |
 | **Model inventory** with upstream provenance | ✓ | [`../benchmark/README.md § Model inventory`](../benchmark/README.md), [`../domain_adaptation/README.md`](../domain_adaptation/README.md), [`../basemodel-benchmarking/README.md`](../basemodel-benchmarking/README.md) |
 | **Preprocessing decisions** (QC, scale normalisation, alias map) | ✓ | [`../preprocessing/pipeline_decisions.md`](../preprocessing/pipeline_decisions.md) |
 | **Loader / metric contract** | ✓ | [`../benchmark/utils/README.md`](../benchmark/utils/README.md) |

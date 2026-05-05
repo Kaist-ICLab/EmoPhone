@@ -33,6 +33,9 @@ Dataset_Doc_Personalization*.md
 *.csv
 *.pkl
 *.png
+*.pdf
+*.txt
+*.json
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Carve-outs: documentation assets and committed result templates we DO track.

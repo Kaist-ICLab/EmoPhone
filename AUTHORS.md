@@ -12,7 +12,7 @@ This file lists the authors and contributors responsible for the **CrossUserData
 |---|---|---|
 | [TBD on acceptance — Author 1] | [TBD institution] | Lead author; dataset design and curation |
 | [TBD on acceptance — Author 2] | [TBD institution] | Data collection; ESM protocol |
-| [TBD on acceptance — Author 3] | [TBD institution] | Benchmark design; Tier A/B/C implementation |
+| [TBD on acceptance — Author 3] | [TBD institution] | Benchmark design; Setting A/B/C implementation |
 | [TBD on acceptance — Author 4] | [TBD institution] | Preprocessing; feature alignment |
 | [TBD on acceptance — Author 5] | [TBD institution] | Ethics oversight; IRB coordination |
 | [TBD on acceptance — Principal Investigator] | [TBD institution] | Corresponding author |

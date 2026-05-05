@@ -45,7 +45,7 @@ Excluded participants are not present in the released `UserInfo.csv`, `EsmRespon
   - D1 → `BT_RSSI` bucketed signal-strength features (113 columns).
   - D2 / D3 → `BT_classType` and `BT_DeviceType` categorical encodings.
 
-These differences are documented empirically in [`feature_alignment.md`](./feature_alignment.md) and handled automatically by the Tier C loader via common-feature intersection (see [`../benchmark/tier_c/README.md`](../benchmark/tier_c/README.md)).
+These differences are documented empirically in [`feature_alignment.md`](./feature_alignment.md) and handled automatically by the Setting C loader via common-feature intersection (see [`../benchmark/setting_c/README.md`](../benchmark/setting_c/README.md)).
 
 ---
 
@@ -61,7 +61,7 @@ The ESM scale differs between waves:
 | D2 | −3 to +3 | −3 to +3 |
 | D3 | 0 to +6 | 0 to +6 |
 
-For cross-wave tasks (Tier C), D3 Stress and Disturbance are shifted by −3 so that all waves share the [−3, +3] range. The binary label in `pkl[1]` is already computed on the harmonised scale; the raw-value array `pkl[3]` preserves each wave's original scale and must be shifted manually if used.
+For cross-wave tasks (Setting C), D3 Stress and Disturbance are shifted by −3 so that all waves share the [−3, +3] range. The binary label in `pkl[1]` is already computed on the harmonised scale; the raw-value array `pkl[3]` preserves each wave's original scale and must be shifted manually if used.
 
 The EDA helper `normalize_label_series` in [`../EDA/utils.py`](../EDA/utils.py) applies the same shift automatically:
 
@@ -97,9 +97,9 @@ See [`../data/schema.md`](../data/schema.md) § "Time Window Suffixes" for the e
 
 ---
 
-## 6. Categorical-value alias map (Tier C harmonisation)
+## 6. Categorical-value alias map (Setting C harmonisation)
 
-Resolved during Tier C feature alignment so that one-hot categorical columns line up across waves. Applied to the **source wave** so that it emits the target-wave's vocabulary; documented for each sensor family.
+Resolved during Setting C feature alignment so that one-hot categorical columns line up across waves. Applied to the **source wave** so that it emits the target-wave's vocabulary; documented for each sensor family.
 
 ### 6.1 `CALL_CNT` (call contact type)
 
@@ -123,7 +123,7 @@ Resolved during Tier C feature alignment so that one-hot categorical columns lin
 
 - D1: `BT_OFF`, `BT_ON` only (2 categories).
 - D2 / D3: 8 categories including transition states (`BT_TURNING_OFF`, `BT_TURNING_ON`, `WIFI_DISABLED`, `WIFI_DISABLING`, `WIFI_ENABLED`, `WIFI_ENABLING`).
-- **Action**: drop the extra D2/D3-only categories for D1-inclusive Tier C transfers; keep them for D2↔D3 transfers.
+- **Action**: drop the extra D2/D3-only categories for D1-inclusive Setting C transfers; keep them for D2↔D3 transfers.
 
 ### 6.4 `Notification_CAT#` (notification category)
 
@@ -134,11 +134,11 @@ Resolved during Tier C feature alignment so that one-hot categorical columns lin
 ### 6.5 Location clusters (`LOC_CLS#`)
 
 - Cluster IDs are cohort-specific (per-participant k-means / DBSCAN hashes). They do not align across waves and are not harmonisable via aliasing.
-- **Action**: keep within-wave; drop from Tier C common-feature intersection.
+- **Action**: keep within-wave; drop from Setting C common-feature intersection.
 
 ### 6.6 Feature-group presence matrix (summary)
 
-| Feature group | D1 | D2 | D3 | Tier C treatment |
+| Feature group | D1 | D2 | D3 | Setting C treatment |
 |---|---|---|---|---|
 | `keyevent_*` | ✗ | ✓ | ✓ | Drop for D1-inclusive transfers |
 | `WIFI_COS|JAC|EUC|MAN` | ✓ | ✓ | ✗ | Drop for D3-inclusive transfers |
@@ -147,7 +147,7 @@ Resolved during Tier C feature alignment so that one-hot categorical columns lin
 | `BT_classType`, `BT_DeviceType` | ✗ | ✓ | ✓ | Drop for D1-inclusive transfers |
 | `PIF#` participant info | ✓ | ✓ | ✓ | Retained but not the focus of this benchmark; removed in some analyses (see paper FeatureAlign report: 7,961 / 10,102 / 10,550 cols after `PIF#` removal) |
 
-The Tier C loader intersects the remaining columns and drops any column not present in every source/target wave.
+The Setting C loader intersects the remaining columns and drops any column not present in every source/target wave.
 
 ---
 
@@ -156,7 +156,7 @@ The Tier C loader intersects the remaining columns and drops any column not pres
 - All benchmarks use a **fixed global seed** (documented in [`../benchmark/README.md`](../benchmark/README.md)).
 - Fit statistics for preprocessing transformers (means, scales, imputation values) are **fit on the training split only** and applied to validation/test unchanged.
 - No test-split information leaks into feature selection, normalisation, or model selection.
-- Optuna runs 30 trials per model × task × tier, selected on validation AUROC.
+- Optuna runs 30 trials per model × task × setting, selected on validation AUROC.
 
 ---
 

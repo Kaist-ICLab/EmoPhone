@@ -325,6 +325,83 @@ def load_df_X_combined(data_root: str | None = None) -> pd.DataFrame:
     return pd.concat(parts, axis=0, join="inner", ignore_index=True)
 
 
+def apply_28d_window(
+    df: pd.DataFrame,
+    dataset_col: str,
+    pid_col: str,
+    ts_col: str,
+    tz: str = "Asia/Seoul",
+    dataset_order: Sequence[str] | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Align each participant's first day to a dataset anchor date and keep a 28-day window.
+
+    Returns (filtered_df, summary_df) where summary_df includes rows_before/after.
+    """
+    if df is None or df.empty:
+        summary = pd.DataFrame(
+            columns=[dataset_col, "rows_before", "rows_after", "participants_after"]
+        )
+        return df.copy() if df is not None else pd.DataFrame(), summary
+
+    if ts_col not in df.columns or dataset_col not in df.columns or pid_col not in df.columns:
+        summary = pd.DataFrame(
+            columns=[dataset_col, "rows_before", "rows_after", "participants_after"]
+        )
+        return df.copy(), summary
+
+    ts = pd.to_datetime(df[ts_col], errors="coerce", utc=True)
+    if tz:
+        ts = ts.dt.tz_convert(tz)
+
+    ok = ts.notna()
+    base = df.loc[ok].copy()
+    base["_ts"] = ts.loc[ok]
+
+    datasets = dataset_order or list(pd.unique(base[dataset_col].dropna()))
+    rows = []
+    kept = []
+
+    for ds in datasets:
+        dsub = base[base[dataset_col] == ds].copy()
+        before = len(dsub)
+        if dsub.empty:
+            rows.append({
+                dataset_col: ds,
+                "rows_before": 0,
+                "rows_after": 0,
+                "participants_after": 0,
+            })
+            continue
+
+        anchor_date = dsub["_ts"].dt.normalize().min()
+        user_start_date = dsub.groupby(pid_col)["_ts"].transform(
+            lambda s: s.dt.normalize().min()
+        )
+        day_offset = (user_start_date - anchor_date).dt.days
+        aligned_ts = dsub["_ts"] - pd.to_timedelta(day_offset, unit="D")
+
+        window_end = anchor_date + pd.Timedelta(days=27)
+        aligned_dates = aligned_ts.dt.normalize()
+        in_window = (aligned_dates >= anchor_date) & (aligned_dates <= window_end)
+
+        kept_sub = dsub.loc[in_window].copy()
+        kept.append(kept_sub.drop(columns=["_ts"]))
+
+        rows.append({
+            dataset_col: ds,
+            "rows_before": before,
+            "rows_after": len(kept_sub),
+            "participants_after": kept_sub[pid_col].nunique(),
+        })
+
+    filtered = (
+        pd.concat(kept, ignore_index=True) if kept else df.iloc[0:0].copy()
+    )
+    summary = pd.DataFrame(rows)
+    return filtered, summary
+
+
 __all__ = [
     "GENDER_COLORS",
     "COLORS",
@@ -356,4 +433,5 @@ __all__ = [
     "get_data_root",
     "get_pkl_paths",
     "load_df_X_combined",
+    "apply_28d_window",
 ]

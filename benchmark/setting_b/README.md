@@ -1,6 +1,6 @@
-# Tier B — Within-Dataset Cross-User Transfer
+# Setting B — Within-Dataset Cross-User Transfer
 
-Tier B evaluates user-independent generalisation **within each wave**: models train on some users and must predict for unseen users from the same wave. This isolates the challenge of person-level heterogeneity from the additional complication of cross-wave dataset shift (Tier C).
+Setting B evaluates user-independent generalisation **within each wave**: models train on some users and must predict for unseen users from the same wave. This isolates the challenge of person-level heterogeneity from the additional complication of cross-wave dataset shift (Setting C).
 
 ---
 
@@ -8,7 +8,7 @@ Tier B evaluates user-independent generalisation **within each wave**: models tr
 
 *Do models trained on a subset of users in a wave generalise to users held out from the same wave?*
 
-This is the benchmark's **primary within-dataset transfer** setting.
+This is the benchmark's **primary within-dataset transfer** scenario.
 
 ---
 
@@ -40,7 +40,7 @@ A (wave, task) pair is included only if, after per-fold construction:
 
 ## Method families evaluated
 
-Tier B compares three families:
+Setting B compares three families:
 
 1. **Baselines + tabular NNs** — XGBoost, LightGBM, MLP, ResNet, TabNet, SAINT, TabTransformer, FTTransformer, DCN.
 2. **Domain generalisation (DG)** — IRM, VREx, GroupDRO, MixStyle, MLDG, MASF, Fish, CSD, SagNet (DomainBed protocols; shared MLP backbone). "Domains" within a wave are groups of users defined by clustering participant-level covariate statistics.
@@ -50,7 +50,7 @@ Tier B compares three families:
 
 ## Per-user normalisation
 
-Tier B applies **per-user feature normalisation** (z-score within each user) before training to reduce inter-user scale effects and emphasise within-user deviations from each user's own baseline. Normaliser statistics are fit on each user's train-fold samples only.
+Setting B applies **per-user feature normalisation** (z-score within each user) before training to reduce inter-user scale effects and emphasise within-user deviations from each user's own baseline. Normaliser statistics are fit on each user's train-fold samples only.
 
 ---
 
@@ -82,4 +82,4 @@ From the paper (shared-label family averages across D1 / D2 / D3):
 | DG | 0.559 |
 | **DA** | **0.587** |
 
-Paper finding: DA (notably MCC, CDAN, JAN) is the strongest family on Tier B shared labels, with the pattern extending to most D3 rich-label tasks.
+Paper finding: DA (notably MCC, CDAN, JAN) is the strongest family on Setting B shared labels, with the pattern extending to most D3 rich-label tasks.
