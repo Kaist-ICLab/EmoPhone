@@ -67,3 +67,26 @@ data/D2/
 data/D3/
 data/full/
 data/processed/
+
+# Symlinked or staged data pickles at data/ root
+data/*.pkl
+
+# Local smoke / experiment outputs at repo root
+results/
+
+# DA_Verification: keep source code (.py, .md), drop heavy experiment artefacts
+DA_Verification/**/cluster_transfer/
+DA_Verification/**/pair_transfer/
+DA_Verification/**/loso_feature_tsne_*/
+DA_Verification/**/suite/
+DA_Verification/CGDM/DA_Verification/
+DA_Verification/**/__pycache__/
+DA_Verification/**/*.pt
+DA_Verification/**/*.jpg
+DA_Verification/**/*.jpeg
+
+# Local logs, lightning artefacts, model snapshots
+logs/
+lightning_logs/
+saved_models/
+.pt_tmp/

@@ -61,13 +61,30 @@ Upstream reference: [Transfer-Learning-Library (TLL)](https://github.com/thuml/T
 
 ```
 domain_adaptation/
-├── README.md    # this file
-└── models/      # in-repo DG/DA implementations
+├── README.md            # this file
+└── models/              # in-repo DG / DA implementations
+    ├── da_models.py     # DANN, CDAN, DAN, DeepCORAL, MCC, ADDA, MCD, JAN, SHOT, CBST, CGDM
+    ├── domainbed_algos.py  # IRM, VREx, GroupDRO, MixStyle, MLDG, MASF, Fish, CSD, SagNet
+    └── da_tllib_losses.py  # TLL-style adversarial / MMD losses shared by the DA family
 ```
 
 ---
 
 ## Running
+
+The runnable entry points live in [`../basemodel-benchmarking/`](../basemodel-benchmarking/) so that DG / DA models share the same data loader, logger, and HPO loop as the baselines. Run from the repo root, passing a DG / DA model name (and `--uda` for DA):
+
+```bash
+# Setting B — within-wave DA
+python basemodel-benchmarking/benchmark.py \
+    --dataset D-1 --label valence --model DANN --backbone MLP --uda \
+    --hpo_trials 30 --hpo_mode fold1
+
+# Setting C — cross-wave DA
+python basemodel-benchmarking/cross_dataset.py \
+    --label arousal --model CDAN --uda \
+    --hpo_trials 30 --run_setting one_to_one
+```
 
 See the setting-level READMEs for the protocol:
 
