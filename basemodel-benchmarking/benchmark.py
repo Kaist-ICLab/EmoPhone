@@ -13,6 +13,10 @@ import torch
 import torch.nn as nn
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedShuffleSplit
 from sklearn.preprocessing import LabelEncoder
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
@@ -291,7 +295,7 @@ def get_args():
 def train_model(args, X_train, y_train, d_train, X_val, y_val, d_val,
                 input_dim, num_classes, num_domains, hparams, seed=42, patience=20, X_target=None):
 
-    print(f"  [DEBUG] train_model params: Backbone={args.backbone}, Model={args.model}, LR={hparams.get('lr')}")
+    logger.info(f"  [DEBUG] train_model params: Backbone={args.backbone}, Model={args.model}, LR={hparams.get('lr')}")
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -536,7 +540,7 @@ def main():
     output_path = Path(args.output)
     progress_output_path = output_path.with_name(output_path.stem + "_progress.csv")
 
-    print(f"Loading {args.dataset} (Label: {args.label})...")
+    logger.info(f"Loading {args.dataset} (Label: {args.label})...")
 
     if args.label == "stress_binary":
         if args.dataset == 'D-1':
@@ -580,7 +584,7 @@ def main():
             val_ratio=args.temporal_val_ratio,
             drop_days=args.temporal_drop_days,
         )
-        print(
+        logger.info(
             "Temporal split stats: "
             f"kept_users={reason_counts['kept_users']}, "
             f"dropped_insufficient_samples={reason_counts['dropped_insufficient_samples']}, "
@@ -609,7 +613,7 @@ def main():
             new_train, new_val, new_test, diversity_stats = filter_split_for_label_diversity(
                 ds.y, ds.users, train_idx, val_idx, test_idx,
             )
-            print(
+            logger.info(
                 f"[Tier A rebin] label={args.label} fold={fold_id} agg={agg} "
                 f"old_class_balance={dict(zip(old_y_overall[0].tolist(), old_y_overall[1].tolist()))} "
                 f"new_class_balance={dict(zip(*[a.tolist() for a in np.unique(ds.y, return_counts=True)]))} "
@@ -618,7 +622,7 @@ def main():
                 f"sizes: train {len(train_idx)}->{len(new_train)} "
                 f"val {len(val_idx)}->{len(new_val)} test {len(test_idx)}->{len(new_test)}"
             )
-            print(f"[Tier A rebin] per-user thresholds (fold {fold_id}): {thresholds}")
+            logger.info(f"[Tier A rebin] per-user thresholds (fold {fold_id}): {thresholds}")
             if len(new_train) == 0 or len(new_val) == 0 or len(new_test) == 0:
                 raise ValueError(
                     f"Rebinarization left fold {fold_id} empty in train/val/test. "
@@ -669,7 +673,7 @@ def main():
     best_hparams = {}
 
     def _run_hpo(folds_for_hpo, *, label):
-        print(f"Starting {label} with {args.hpo_trials} trials...")
+        logger.info(f"Starting {label} with {args.hpo_trials} trials...")
 
         def objective(trial):
             hparams = get_hparams(args.model, args.dataset, backbone=args.backbone)
@@ -698,7 +702,7 @@ def main():
                     val_metrics = evaluate_model(model, X_val_eval, y_val_eval)
                     scores.append(val_metrics['AUROC'])
                 except Exception as e:
-                    print(f"HPO Trial failed on fold {entry['fold_id'] + 1}: {e}")
+                    logger.info(f"HPO Trial failed on fold {entry['fold_id'] + 1}: {e}")
                     return 0.0
                 finally:
                     model = None
@@ -709,7 +713,7 @@ def main():
         study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
         study.optimize(objective, n_trials=args.hpo_trials)
         best_params = dict(study.best_trial.user_attrs.get("resolved_hparams", {})) or dict(study.best_params)
-        print("Best HPO params:", best_params)
+        logger.info("Best HPO params:", best_params)
         return best_params, study
 
     hpo_study = None
@@ -730,7 +734,7 @@ def main():
 
     for entry in fold_data:
         fold_id = entry["fold_id"]
-        print(f"\n=== Fold {fold_id + 1}/{group_folds} ===")
+        logger.info(f"\n=== Fold {fold_id + 1}/{group_folds} ===")
 
         fold_hparams = best_hparams
         fold_study = hpo_study
@@ -738,10 +742,10 @@ def main():
             fold_hparams, fold_study = _run_hpo([entry], label=f"Nested HPO (Fold {fold_id + 1})")
 
         d_train, d_val, num_domains, X_target = _prepare_domain_info(entry)
-        print(f"Data Splits: Train {entry['X_train'].shape}, Val {entry['X_val'].shape}, Test {entry['X_test'].shape}")
+        logger.info(f"Data Splits: Train {entry['X_train'].shape}, Val {entry['X_val'].shape}, Test {entry['X_test'].shape}")
 
         for seed in seeds:
-            print(f"\n--- Fold {fold_id + 1} | Seed {seed} ---")
+            logger.info(f"\n--- Fold {fold_id + 1} | Seed {seed} ---")
 
             logger = BenchmarkLogger(output_dir=records_dir, benchmark_type="cross_user")
 
@@ -804,7 +808,7 @@ def main():
             infer = record["inference_benchmark"].get("test", {})
             sustain = record["sustainability"]
 
-            print(f"  Train AUROC={train_m['auroc']:.4f}  Val AUROC={val_m['auroc']:.4f}  Test AUROC={test_m['auroc']:.4f}  wall={rt['total_wall_s']}s")
+            logger.info(f"  Train AUROC={train_m['auroc']:.4f}  Val AUROC={val_m['auroc']:.4f}  Test AUROC={test_m['auroc']:.4f}  wall={rt['total_wall_s']}s")
 
             fold_result = {
                 'Train_Accuracy': train_m['accuracy'], 'Train_AUROC': train_m['auroc'],
@@ -881,10 +885,10 @@ def main():
             os.makedirs(os.path.dirname(args.output), exist_ok=True)
         header = not os.path.exists(args.output)
         pd.DataFrame([summary]).to_csv(args.output, mode='a', header=header, index=False)
-        print(f"\n=== Summary (Mean ± Std over {len(all_fold_results)} folds) ===")
+        logger.info(f"\n=== Summary (Mean ± Std over {len(all_fold_results)} folds) ===")
         for key in ['Test_AUROC', 'Test_F1', 'Test_Accuracy']:
-            print(f"  {key}: {summary[f'{key}_Mean']:.4f} ± {summary[f'{key}_Std']:.4f}")
-        print(f"Summary saved to {args.output}")
+            logger.info(f"  {key}: {summary[f'{key}_Mean']:.4f} ± {summary[f'{key}_Std']:.4f}")
+        logger.info(f"Summary saved to {args.output}")
 
 
 

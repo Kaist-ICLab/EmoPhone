@@ -1,4 +1,8 @@
 """CBST: Class-Balanced Self-Training (Zou et al., 2018)."""
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import copy
 
@@ -135,7 +139,7 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
             pseudo_labels.append(torch.full((k,), c, dtype=torch.long).to(device))
 
         if not pseudo_idx:
-            print("CBST: No pseudo-labels selected, skipping round.")
+            logger.info("CBST: No pseudo-labels selected, skipping round.")
             continue
 
         pseudo_idx_cat = torch.cat(pseudo_idx)
@@ -148,7 +152,7 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
         ds_aug = torch.utils.data.TensorDataset(X_aug, y_aug)
         loader_aug = torch.utils.data.DataLoader(ds_aug, batch_size=batch_size, shuffle=True, drop_last=True)
 
-        print(f"CBST: Round {round_idx+1}/{max_iter} - Retraining with {len(X_pseudo)} pseudo-labels")
+        logger.info(f"CBST: Round {round_idx+1}/{max_iter} - Retraining with {len(X_pseudo)} pseudo-labels")
         model.train()
         for _ in range(retrain_epochs):
             for x, y in loader_aug:
@@ -160,7 +164,7 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
             epochs_ran += 1
 
         val_loss, val_auroc = _track_best('selftrain', round_idx + 1)
-        print(f"CBST: Round {round_idx+1} val_auroc={val_auroc:.4f} (best={best_val_score:.4f} @ {best_phase}/{best_step})")
+        logger.info(f"CBST: Round {round_idx+1} val_auroc={val_auroc:.4f} (best={best_val_score:.4f} @ {best_phase}/{best_step})")
 
     if best_model_state is not None:
         model.load_state_dict(best_model_state)

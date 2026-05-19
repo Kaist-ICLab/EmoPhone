@@ -35,6 +35,10 @@ from torch.utils.data import DataLoader, TensorDataset
 from torchmetrics.classification import BinaryAUROC
 from tqdm import tqdm
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 FIXED_BATCH_SIZE = 16
 
 
@@ -171,13 +175,13 @@ class TabNetWrapper(BaseEstimator, ClassifierMixin):
         else: verbose = 1
 
         if 'n_d' in params and int(params['n_d']) > 32:
-            print(f"[INFO] TabNet: capped n_d from {params['n_d']} to 32.")
+            logger.info(f"[INFO] TabNet: capped n_d from {params['n_d']} to 32.")
             params['n_d'] = 32
         if 'n_a' in params and int(params['n_a']) > 32:
-            print(f"[INFO] TabNet: capped n_a from {params['n_a']} to 32.")
+            logger.info(f"[INFO] TabNet: capped n_a from {params['n_a']} to 32.")
             params['n_a'] = 32
         if 'n_steps' in params and int(params['n_steps']) > 6:
-            print(f"[INFO] TabNet: capped n_steps from {params['n_steps']} to 6.")
+            logger.info(f"[INFO] TabNet: capped n_steps from {params['n_steps']} to 6.")
             params['n_steps'] = 6
 
         tabnet_params = _filter_supported_kwargs(TabNetClassifier.__init__, params)
@@ -260,7 +264,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             max_dim = max(n_heads, token_element_budget // max(1, n_features * max(1, self.batch_size)))
             max_dim = max(n_heads, (max_dim // n_heads) * n_heads)
             if input_dim > max_dim:
-                print(
+                logger.info(
                     f"[INFO] {model_name}: capped input_dim from {params.get('input_dim')} to {max_dim} "
                     f"for {n_features} features and batch_size={self.batch_size}."
                 )
@@ -269,7 +273,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             max_batch = max(1, token_element_budget // max(1, n_features * max(1, input_dim)))
             if self.batch_size > max_batch:
                 adjusted_batch = next((candidate for candidate in (64, 32, 16, 8) if candidate <= max_batch), 8)
-                print(
+                logger.info(
                     f"[INFO] {model_name}: capped batch_size from {self.batch_size} to {adjusted_batch} "
                     f"for {n_features} features and input_dim={input_dim}."
                 )
@@ -291,7 +295,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
                 saint_params.setdefault('ff_dropout', dropout_val)
             _cap_transformer_params(saint_params, 'SAINT')
             if self.efficient_attention:
-                print("[INFO] SAINT: enabling linear-attention path for SAINT encoder blocks.")
+                logger.info("[INFO] SAINT: enabling linear-attention path for SAINT encoder blocks.")
                 if not getattr(_saint_mod, "_ubicomp_linear_saint_patch", False):
                     class EfficientSaintEncoder(nn.Module):
                         def __init__(
@@ -372,7 +376,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             _cap_transformer_params(tt_params, 'TabTransformer')
             tt_params['use_linear_attention'] = bool(self.efficient_attention)
             if self.efficient_attention:
-                print("[INFO] TabTransformer: use_linear_attention=True (architecture preserved).")
+                logger.info("[INFO] TabTransformer: use_linear_attention=True (architecture preserved).")
             tt_params = _filter_supported_kwargs(TabTransformer.__init__, tt_params)
             effective_model_params = dict(tt_params)
             deeptabular = TabTransformer(
@@ -394,7 +398,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             ft_params.setdefault('input_dim', 32)
             ft_params.setdefault('n_heads', 4)
             if int(ft_params.get('n_blocks', 2)) > 3:
-                print(f"[INFO] FTTransformer: capped n_blocks from {ft_params.get('n_blocks')} to 3.")
+                logger.info(f"[INFO] FTTransformer: capped n_blocks from {ft_params.get('n_blocks')} to 3.")
                 ft_params['n_blocks'] = 3
             # Multi-head attention requires the embedding width to be divisible by the number of heads.
             # Coerce misconfigured HPO suggestions to the nearest valid multiple instead of failing late.
@@ -405,7 +409,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             if input_dim % n_heads != 0:
                 adjusted = max(n_heads, int(round(input_dim / n_heads)) * n_heads)
                 if adjusted != input_dim:
-                    print(f"[INFO] FTTransformer: adjusted input_dim from {input_dim} to {adjusted} for n_heads={n_heads}.")
+                    logger.info(f"[INFO] FTTransformer: adjusted input_dim from {input_dim} to {adjusted} for n_heads={n_heads}.")
                 ft_params['input_dim'] = adjusted
                 ft_params['n_heads'] = n_heads
                 input_dim = adjusted
@@ -413,7 +417,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             max_ft_input_dim = 64
             if input_dim > max_ft_input_dim:
                 adjusted = max(n_heads, (max_ft_input_dim // n_heads) * n_heads)
-                print(f"[INFO] FTTransformer: capped input_dim from {input_dim} to {adjusted}.")
+                logger.info(f"[INFO] FTTransformer: capped input_dim from {input_dim} to {adjusted}.")
                 ft_params['input_dim'] = adjusted
                 input_dim = adjusted
 
@@ -422,7 +426,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             max_dim = max(n_heads, token_element_budget // max(1, n_features * max(1, self.batch_size)))
             max_dim = max(n_heads, (max_dim // n_heads) * n_heads)
             if input_dim > max_dim:
-                print(
+                logger.info(
                     f"[INFO] FTTransformer: capped input_dim from {input_dim} to {max_dim} "
                     f"for {n_features} features and batch_size={self.batch_size}."
                 )
@@ -432,13 +436,13 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             max_batch = max(1, token_element_budget // max(1, n_features * max(1, input_dim)))
             if self.batch_size > max_batch:
                 adjusted_batch = next((candidate for candidate in (64, 32, 16, 8) if candidate <= max_batch), 8)
-                print(
+                logger.info(
                     f"[INFO] FTTransformer: capped batch_size from {self.batch_size} to {adjusted_batch} "
                     f"for {n_features} features and input_dim={input_dim}."
                 )
                 self.batch_size = adjusted_batch
             if self.efficient_attention:
-                print("[INFO] FTTransformer: enabling kernel linear-attention path in FT encoder blocks.")
+                logger.info("[INFO] FTTransformer: enabling kernel linear-attention path in FT encoder blocks.")
                 if not getattr(_ft_mod, "_ubicomp_linear_ft_patch", False):
                     class EfficientFTTransformerEncoder(nn.Module):
                         def __init__(
@@ -529,7 +533,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
         
         def _patched_wd_init(self, X_wide=None, X_tab=None, X_text=None, X_img=None, target=None, transforms=None):
             if X_tab is not None and isinstance(X_tab, dict) and 'X_tab' in X_tab:
-                # print("[DEBUG] Patch triggered: Unwrapping X_tab from dict")
+                # logger.info("[DEBUG] Patch triggered: Unwrapping X_tab from dict")
                 X_tab = X_tab['X_tab']
             _original_wd_init(self, X_wide=X_wide, X_tab=X_tab, X_text=X_text, X_img=X_img, target=target, transforms=transforms)
             
@@ -623,7 +627,7 @@ class TorchStateDictEarlyStopping(Callback):
         if self.restore_best_weights and self.best_state_dict is not None:
             self.model.load_state_dict(self.best_state_dict)
         if self.verbose > 0:
-            print(f"Epoch {epoch + 1:05d}: early stopping")
+            logger.info(f"Epoch {epoch + 1:05d}: early stopping")
 
     def _is_improvement(self, current, best):
         return self.monitor_op(current - self.min_delta, best)
@@ -708,10 +712,10 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
                 original_units = tuple(int(v) for v in dcn_params['dnn_hidden_units'])
                 capped_units = tuple(min(v, 256) for v in original_units[:4])
                 if capped_units != original_units:
-                    print(f"[INFO] DCN: capped dnn_hidden_units from {original_units} to {capped_units}.")
+                    logger.info(f"[INFO] DCN: capped dnn_hidden_units from {original_units} to {capped_units}.")
                 dcn_params['dnn_hidden_units'] = capped_units
             if 'cross_num' in dcn_params and int(dcn_params['cross_num']) > 4:
-                print(f"[INFO] DCN: capped cross_num from {dcn_params['cross_num']} to 4.")
+                logger.info(f"[INFO] DCN: capped cross_num from {dcn_params['cross_num']} to 4.")
                 dcn_params['cross_num'] = 4
             dcn_params.pop('cross_dropout', None)
             dcn_params.pop('layer_size', None)
@@ -736,15 +740,15 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
             autoint_params = params.copy()
             n_bins = int(autoint_params.pop('autoint_bins', 16))
             if n_bins > 16:
-                print(f"[INFO] AutoInt: capped autoint_bins from {n_bins} to 16.")
+                logger.info(f"[INFO] AutoInt: capped autoint_bins from {n_bins} to 16.")
                 n_bins = 16
             if 'dropout' in autoint_params and 'dnn_dropout' not in autoint_params:
                 autoint_params['dnn_dropout'] = autoint_params.pop('dropout')
             if 'att_layer_num' in autoint_params and int(autoint_params['att_layer_num']) > 3:
-                print(f"[INFO] AutoInt: capped att_layer_num from {autoint_params['att_layer_num']} to 3.")
+                logger.info(f"[INFO] AutoInt: capped att_layer_num from {autoint_params['att_layer_num']} to 3.")
                 autoint_params['att_layer_num'] = 3
             if 'att_head_num' in autoint_params and int(autoint_params['att_head_num']) > 4:
-                print(f"[INFO] AutoInt: capped att_head_num from {autoint_params['att_head_num']} to 4.")
+                logger.info(f"[INFO] AutoInt: capped att_head_num from {autoint_params['att_head_num']} to 4.")
                 autoint_params['att_head_num'] = 4
             autoint_params.setdefault('l2_reg_dnn', weight_decay)
             autoint_params.setdefault('l2_reg_embedding', weight_decay)

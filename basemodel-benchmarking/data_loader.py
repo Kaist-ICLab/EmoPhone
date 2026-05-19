@@ -5,6 +5,10 @@ from typing import Tuple, List, Dict, Optional
 import io
 import os
 import zipfile
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 class BenchmarkDataset:
@@ -26,7 +30,7 @@ class BenchmarkDataset:
         if not os.path.exists(self.file_path):
             raise FileNotFoundError(f"File not found: {self.file_path}")
 
-        print(f"Loading {self.dataset_name} from {self.file_path}...")
+        logger.info(f"Loading {self.dataset_name} from {self.file_path}...")
         with open(self.file_path, 'rb') as f:
             data = pickle.load(f)
 
@@ -43,7 +47,7 @@ class BenchmarkDataset:
                 if self.feature_names is None or len(self.feature_names) != self.X.shape[1]:
                     self.feature_names = [f"feature_{i}" for i in range(self.X.shape[1])]
 
-            print(f"Feature Names Sample: {self.feature_names[:5]}")
+            logger.info(f"Feature Names Sample: {self.feature_names[:5]}")
 
             cols_to_drop = []
             for i, name in enumerate(self.feature_names):
@@ -52,7 +56,7 @@ class BenchmarkDataset:
                     cols_to_drop.append(i)
 
             if cols_to_drop:
-                print(f"Dropping {len(cols_to_drop)} non-feature columns: {[self.feature_names[i] for i in cols_to_drop[:5]]}...")
+                logger.info(f"Dropping {len(cols_to_drop)} non-feature columns: {[self.feature_names[i] for i in cols_to_drop[:5]]}...")
                 keep_mask = np.ones(self.X.shape[1], dtype=bool)
                 keep_mask[cols_to_drop] = False
                 self.X = self.X[:, keep_mask]
@@ -63,12 +67,12 @@ class BenchmarkDataset:
             self.users = np.array(self.users)
             self.timestamps = np.array(self.timestamps)
 
-            print(f"Loaded {self.X.shape[0]} samples, {self.X.shape[1]} features.")
+            logger.info(f"Loaded {self.X.shape[0]} samples, {self.X.shape[1]} features.")
         else:
             raise ValueError(f"Unexpected data format in {self.file_path}")
 
     def filter_one_month(self):
-        print("Filtering usage data to first 1 month per user...")
+        logger.info("Filtering usage data to first 1 month per user...")
         unique_users = np.unique(self.users)
         valid_indices = []
 
@@ -94,7 +98,7 @@ class BenchmarkDataset:
         self.users = self.users[valid_indices]
         self.timestamps = self.timestamps[valid_indices]
 
-        print(f"Filtered data to 1 month. Samples: {original_count} -> {len(self.X)} (Removed {original_count - len(self.X)})")
+        logger.info(f"Filtered data to 1 month. Samples: {original_count} -> {len(self.X)} (Removed {original_count - len(self.X)})")
 
     def filter_users(self):
         unique_users = np.unique(self.users)
@@ -117,14 +121,14 @@ class BenchmarkDataset:
             valid_indices.extend(np.where(user_mask)[0])
 
         if dropped_users:
-            print(f"Dropping {len(dropped_users)} users due to insufficient data: {dropped_users}")
+            logger.info(f"Dropping {len(dropped_users)} users due to insufficient data: {dropped_users}")
 
         valid_indices = np.array(valid_indices)
         self.X = self.X[valid_indices]
         self.y = self.y[valid_indices]
         self.users = self.users[valid_indices]
         self.timestamps = self.timestamps[valid_indices]
-        print(f"Taking {len(valid_indices)} samples after filtering.")
+        logger.info(f"Taking {len(valid_indices)} samples after filtering.")
 
     def normalize_features(self, train_idx, val_idx=None, test_idx=None):
         unique_users = np.unique(self.users)

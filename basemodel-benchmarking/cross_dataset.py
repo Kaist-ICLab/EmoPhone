@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Cross-dataset benchmark runner.
 
@@ -365,7 +369,7 @@ def _run_hpo(args, train_dataset_key: str, X_tr, y_tr, d_tr, X_va, y_va, d_va, X
     if args.hpo_trials <= 0:
         return {}, None
 
-    print(f'  Running HPO on source train/val split only: trials={args.hpo_trials}')
+    logger.info(f'  Running HPO on source train/val split only: trials={args.hpo_trials}')
 
     def objective(trial):
         trial_hparams = _sample_hparams(args, train_dataset_key, trial)
@@ -391,7 +395,7 @@ def _run_hpo(args, train_dataset_key: str, X_tr, y_tr, d_tr, X_va, y_va, d_va, X
             val_metrics = evaluate_model(model, X_va, y_va)
             return float(val_metrics['AUROC'])
         except Exception as exc:
-            print(f'  HPO trial failed: {exc}')
+            logger.info(f'  HPO trial failed: {exc}')
             return 0.0
         finally:
             model = None
@@ -401,7 +405,7 @@ def _run_hpo(args, train_dataset_key: str, X_tr, y_tr, d_tr, X_va, y_va, d_va, X
     study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=args.seed))
     study.optimize(objective, n_trials=args.hpo_trials)
     best_params = dict(study.best_trial.user_attrs.get("resolved_hparams", {})) or dict(study.best_params)
-    print(f'  Best HPO params: {best_params}')
+    logger.info(f'  Best HPO params: {best_params}')
     return best_params, study
 
 
@@ -617,11 +621,11 @@ def get_args():
 def main():
     args = get_args()
 
-    print(f'Loading cross-dataset bundles for label={args.label} ...')
+    logger.info(f'Loading cross-dataset bundles for label={args.label} ...')
     bundles = {d: _load_dataset_raw(d, args.label) for d in ['D-1', 'D-2', 'D-3']}
 
     for d in ['D-1', 'D-2', 'D-3']:
-        print(
+        logger.info(
             f"{d}: samples={bundles[d]['X'].shape[0]}, features(raw)={len(bundles[d]['feature_names_raw'])}, "
             f"alias-collisions={bundles[d]['duplicate_alias_count']}"
         )
@@ -637,10 +641,10 @@ def main():
         with open(common_feature_json, 'w') as f:
             json.dump({'label': args.label, 'common_features': common_features}, f, indent=2)
 
-        print('\n=== Feature Intersection Report ===')
-        print(feature_report_df.to_string(index=False))
-        print(f'Feature report saved to: {feature_report_path}')
-        print(f'Common feature list saved to: {common_feature_json}')
+        logger.info('\n=== Feature Intersection Report ===')
+        logger.info(feature_report_df.to_string(index=False))
+        logger.info(f'Feature report saved to: {feature_report_path}')
+        logger.info(f'Common feature list saved to: {common_feature_json}')
 
     if args.mode in ('run', 'both'):
         aligned = _select_common_features(bundles, common_features)
@@ -658,7 +662,7 @@ def main():
         out_path = Path(args.output)
         records_dir = str(out_path.parent / 'records')
         rows = []
-        print(
+        logger.info(
             f'\nRunning {len(plans)} cross-dataset experiments with {len(common_features)} common features '
             f'(val_ratio={args.val_ratio}, hpo_trials={args.hpo_trials})...'
         )
@@ -666,22 +670,22 @@ def main():
             for seed in seeds:
                 args_for_seed = copy.copy(args)
                 args_for_seed.seed = seed
-                print(f'[{i}/{len(plans)}] Train={"+".join(train_ds)} -> Test={test_ds} | seed={seed}')
+                logger.info(f'[{i}/{len(plans)}] Train={"+".join(train_ds)} -> Test={test_ds} | seed={seed}')
                 row = _run_experiment(args_for_seed, aligned, common_features, args.label, train_ds, test_ds, records_dir, seeds)
                 rows.append(row)
-                print(
+                logger.info(
                     f"  Test AUROC={row['Test_AUROC']:.4f}, Test F1={row['Test_F1']:.4f}, "
                     f"Test ACC={row['Test_Accuracy']:.4f}"
                 )
 
         out_path.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(rows, columns=RESULT_COLUMNS).to_csv(out_path, index=False)
-        print(f'\nCross-dataset results saved to: {out_path}')
+        logger.info(f'\nCross-dataset results saved to: {out_path}')
         summary_rows = build_summary_rows(rows)
         if summary_rows:
             summary_path = out_path.with_name(out_path.stem + '_summary.csv')
             pd.DataFrame(summary_rows).to_csv(summary_path, index=False)
-            print(f'Cross-dataset summary saved to: {summary_path}')
+            logger.info(f'Cross-dataset summary saved to: {summary_path}')
 
 
 if __name__ == '__main__':
