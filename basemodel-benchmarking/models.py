@@ -954,7 +954,7 @@ def train_torch_model(model, X_train, y_train, X_val, y_val,
         val_loss /= max(1, len(val_loader))
         try:
             val_auroc = roc_auc_score(val_targets, val_probs)
-        except:
+        except ValueError:
             val_auroc = 0.5
         epoch_num = epoch + 1
         epochs_ran = epoch_num

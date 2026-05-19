@@ -266,7 +266,7 @@ def train_deepcoral(model, X_train, y_train, d_train, X_val, y_val, d_val,
         val_loss /= len(val_loader)
         try:
             val_auroc = roc_auc_score(val_targets, val_probs)
-        except:
+        except ValueError:
             val_auroc = 0.5
         epoch_num = epoch + 1
         epochs_ran = epoch_num
@@ -848,7 +848,7 @@ def _evaluate_val(model, val_loader, device):
             val_auroc = roc_auc_score(val_targets, val_probs[:, 1])
         else:
             val_auroc = roc_auc_score(val_targets, val_probs, multi_class='ovr', average='macro')
-    except:
+    except ValueError:
         val_auroc = 0.5
     return val_loss, val_auroc
 
