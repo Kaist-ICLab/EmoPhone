@@ -154,6 +154,101 @@ def _finalize_training_metadata(
     return model
 
 
+class EarlyStopTracker:
+    """Shared training-loop bookkeeping for every train_* function in this
+    module. Tracks best validation AUROC, deep-copies the best state,
+    decides when patience runs out, and writes a uniform training-metadata
+    payload onto the model on finalize.
+
+    Behaviour is bit-for-bit identical to the inlined bookkeeping it
+    replaces, including the zero-indexed epoch value used in the
+    "Early stopping at epoch N" message (some log parsers depend on it).
+    """
+
+    def __init__(self, *, patience, epochs, batch_size, lr, weight_decay):
+        self.patience = patience
+        self.max_epochs = epochs
+        self.batch_size = batch_size
+        self.lr = lr
+        self.weight_decay = weight_decay
+
+        self.best_val_score = -float("inf")
+        self.best_model_state = None
+        self.patience_counter = 0
+        self.best_epoch = None
+        self.early_stopped = False
+        self.early_stop_epoch = None
+        self.epochs_ran = 0
+        self.epoch_history = []
+
+    def record(self, model, *, epoch_num, train_loss, val_loss, val_auroc,
+               iterator, postfix_extra=None):
+        """Record one epoch's metrics. Returns True if early-stop fired."""
+        self.epochs_ran = epoch_num
+        if val_auroc > self.best_val_score:
+            self.best_val_score = val_auroc
+            self.best_model_state = copy.deepcopy(model.state_dict())
+            self.patience_counter = 0
+            self.best_epoch = epoch_num
+        else:
+            self.patience_counter += 1
+            if self.patience_counter >= self.patience:
+                iterator.write(
+                    f"Early stopping at epoch {epoch_num - 1} "
+                    f"(Best AUROC: {self.best_val_score:.4f})"
+                )
+                self.early_stopped = True
+                self.early_stop_epoch = epoch_num
+                return True
+
+        postfix = {
+            "Loss": f"{train_loss:.4f}",
+            "Val Loss": f"{val_loss:.4f}",
+            "Val AUC": f"{val_auroc:.4f}",
+        }
+        if postfix_extra:
+            postfix.update(postfix_extra)
+        iterator.set_postfix(postfix)
+
+        self.epoch_history.append({
+            "epoch": epoch_num,
+            "train_loss": round(float(train_loss), 6),
+            "val_loss": round(float(val_loss), 6),
+            "val_auroc": round(float(val_auroc), 6),
+        })
+        return False
+
+    def finalize(self, model, *, optimizer, extra_meta=None):
+        if isinstance(optimizer, str):
+            optimizer_name = optimizer
+        elif optimizer is not None:
+            optimizer_name = optimizer.__class__.__name__
+        else:
+            optimizer_name = None
+        if self.best_model_state is not None:
+            model.load_state_dict(self.best_model_state)
+        _finalize_training_metadata(
+            model,
+            optimizer=optimizer_name,
+            best_epoch=self.best_epoch,
+            early_stopped=self.early_stopped,
+            early_stop_epoch=self.early_stop_epoch,
+            epochs_ran=self.epochs_ran,
+            max_epochs=self.max_epochs,
+            batch_size=self.batch_size,
+            patience=self.patience,
+            lr=self.lr,
+            weight_decay=self.weight_decay,
+            best_metric_value=(
+                round(float(self.best_val_score), 6)
+                if self.best_epoch is not None else None
+            ),
+            epoch_history=self.epoch_history,
+            extra=extra_meta,
+        )
+        return model
+
+
 # --- CORAL: Deep Correlation Alignment ---
 
 def coral_loss(source, target):
@@ -213,14 +308,10 @@ def train_deepcoral(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     target_iter = infinite_iterator(target_loader)
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="DeepCORAL Training")
     for epoch in epoch_iterator:
@@ -268,49 +359,13 @@ def train_deepcoral(model, X_train, y_train, d_train, X_val, y_val, d_val,
             val_auroc = roc_auc_score(val_targets, val_probs)
         except ValueError:
             val_auroc = 0.5
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-
-    _finalize_training_metadata(
-        model,
-        optimizer=optimizer.__class__.__name__,
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-    )
-    return model
+    return tracker.finalize(model, optimizer=optimizer)
 
 # --- CGDM: Cross-Domain Gradient Discrepancy Minimization (CVPR 2021) ---
 # Ported from /home/iclab/minseo/DomainAdaptation/CGDM with minimal changes.
@@ -889,14 +944,10 @@ def train_dann(model, X_train, y_train, d_train, X_val, y_val, d_val,
     )
     class_criterion = nn.CrossEntropyLoss()
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="DANN Training")
     for epoch in epoch_iterator:
@@ -926,50 +977,14 @@ def train_dann(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-
-    _finalize_training_metadata(
-        model,
-        optimizer=optimizer.__class__.__name__,
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-        extra={"discriminator_lr": disc_lr},
-    )
-    return model
+    return tracker.finalize(model, optimizer=optimizer,
+                            extra_meta={"discriminator_lr": disc_lr})
 
 
 def train_cdan(model, X_train, y_train, d_train, X_val, y_val, d_val,
@@ -1020,14 +1035,10 @@ def train_cdan(model, X_train, y_train, d_train, X_val, y_val, d_val,
     )
     class_criterion = nn.CrossEntropyLoss()
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="CDAN Training")
     for epoch in epoch_iterator:
@@ -1057,50 +1068,14 @@ def train_cdan(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-
-    _finalize_training_metadata(
-        model,
-        optimizer=optimizer.__class__.__name__,
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-        extra={"discriminator_lr": disc_lr},
-    )
-    return model
+    return tracker.finalize(model, optimizer=optimizer,
+                            extra_meta={"discriminator_lr": disc_lr})
 
 
 def train_adversarial_da(model, X_train, y_train, d_train, X_val, y_val, d_val,
@@ -1141,14 +1116,10 @@ def train_mcc(model, X_train, y_train, d_train, X_val, y_val, d_val,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="MCC Training")
     for epoch in epoch_iterator:
@@ -1175,48 +1146,13 @@ def train_mcc(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-    _finalize_training_metadata(
-        model,
-        optimizer=optimizer.__class__.__name__,
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-    )
-    return model
+    return tracker.finalize(model, optimizer=optimizer)
 
 
 def train_dan(model, X_train, y_train, d_train, X_val, y_val, d_val,
@@ -1244,14 +1180,10 @@ def train_dan(model, X_train, y_train, d_train, X_val, y_val, d_val,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="DAN Training")
     for epoch in epoch_iterator:
@@ -1279,48 +1211,13 @@ def train_dan(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-    _finalize_training_metadata(
-        model,
-        optimizer=optimizer.__class__.__name__,
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-    )
-    return model
+    return tracker.finalize(model, optimizer=optimizer)
 
 class ADDA(nn.Module):
     """
@@ -1570,14 +1467,10 @@ def train_mcd(model, X_train, y_train, d_train, X_val, y_val, d_val,
     train_loader, val_loader, target_loader = _build_loaders(X_train, y_train, X_val, y_val, X_target, batch_size)
     target_iter = _infinite_iterator(target_loader)
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="MCD Training")
     for epoch in epoch_iterator:
@@ -1629,49 +1522,15 @@ def train_mcd(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-    _finalize_training_metadata(
-        model,
-        optimizer=f"{optimizer_g.__class__.__name__}+{optimizer_c.__class__.__name__}",
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-        extra={"mcd_k": k_steps},
-    )
-    return model
+    optimizer_label = f"{optimizer_g.__class__.__name__}+{optimizer_c.__class__.__name__}"
+    return tracker.finalize(model, optimizer=optimizer_label,
+                            extra_meta={"mcd_k": k_steps})
     
 # --- JAN: Joint Adaptation Network ---
 
@@ -1713,14 +1572,10 @@ def train_jan(model, X_train, y_train, d_train, X_val, y_val, d_val,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
-    best_val_score = -float('inf')
-    best_model_state = None
-    patience_counter = 0
-    best_epoch = None
-    early_stopped = False
-    early_stop_epoch = None
-    epochs_ran = 0
-    epoch_history = []
+    tracker = EarlyStopTracker(
+        patience=patience, epochs=epochs, batch_size=batch_size,
+        lr=lr, weight_decay=weight_decay,
+    )
 
     epoch_iterator = tqdm(range(epochs), desc="JAN Training")
     for epoch in epoch_iterator:
@@ -1750,48 +1605,13 @@ def train_jan(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_num = epoch + 1
-        epochs_ran = epoch_num
 
-        if val_auroc > best_val_score:
-            best_val_score = val_auroc
-            best_model_state = copy.deepcopy(model.state_dict())
-            patience_counter = 0
-            best_epoch = epoch_num
-        else:
-            patience_counter += 1
-            if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
-                early_stopped = True
-                early_stop_epoch = epoch_num
-                break
+        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
+                          val_loss=val_loss, val_auroc=val_auroc,
+                          iterator=epoch_iterator):
+            break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
-        epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
-
-    if best_model_state:
-        model.load_state_dict(best_model_state)
-    _finalize_training_metadata(
-        model,
-        optimizer=optimizer.__class__.__name__,
-        best_epoch=best_epoch,
-        early_stopped=early_stopped,
-        early_stop_epoch=early_stop_epoch,
-        epochs_ran=epochs_ran,
-        max_epochs=epochs,
-        batch_size=batch_size,
-        patience=patience,
-        lr=lr,
-        weight_decay=weight_decay,
-        best_metric_value=round(float(best_val_score), 6) if best_epoch is not None else None,
-        epoch_history=epoch_history,
-    )
-    return model
+    return tracker.finalize(model, optimizer=optimizer)
 
 # --- SHOT: Source Hypothesis Transfer ---
 
