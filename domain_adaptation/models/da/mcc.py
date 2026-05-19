@@ -10,6 +10,11 @@ from tqdm import tqdm
 
 from .._da_helpers import (
     DAModel,
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_DEVICE,
+    DEFAULT_EPOCHS,
+    DEFAULT_LR,
+    DEFAULT_PATIENCE,
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
@@ -35,9 +40,17 @@ class MCC(DAModel):
 
 
 
-def train_mcc(model, X_train, y_train, d_train, X_val, y_val, d_val,
-              epochs=50, batch_size=64, lr=1e-3, patience=5,
-              device='cuda' if torch.cuda.is_available() else 'cpu', X_target=None):
+def train_mcc(
+    model,
+    X_train, y_train, d_train,
+    X_val, y_val, d_val,
+    epochs: int = DEFAULT_EPOCHS,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    lr: float = DEFAULT_LR,
+    patience: int = DEFAULT_PATIENCE,
+    device: str = DEFAULT_DEVICE,
+    X_target=None,
+):
     """
     MCC (TLL-style): L = L_cls(source) + mu * MCC(target_logits).
     Requires unlabeled target samples (X_target).

@@ -34,6 +34,16 @@ for _p in (_BMB, _ROOT):
 from backbones import MLPFeaturizer, ResNetFeaturizer, TransformerFeaturizer
 from models import attach_training_metadata, train_torch_model
 
+# Shared default hyperparameters used by every train_* function in this
+# subpackage. The values match the historical inlined defaults exactly; the
+# constants exist to make tuning discoverable and to surface the fact that
+# every algorithm shares the same training-loop schedule.
+DEFAULT_EPOCHS: int = 50
+DEFAULT_BATCH_SIZE: int = 64
+DEFAULT_LR: float = 1e-3
+DEFAULT_PATIENCE: int = 5
+DEFAULT_DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class DAModel(nn.Module):
     """
