@@ -1,4 +1,8 @@
 """Shared training loop for every DG algorithm in this subpackage."""
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 import copy
 import operator
@@ -72,7 +76,7 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
     if hasattr(model, 'hparams'):
         model.hparams['num_domains'] = num_domains
 
-    print(f"DG Training: {num_domains} domains, sampling {domains_per_batch} per batch.")
+    logger.info(f"DG Training: {num_domains} domains, sampling {domains_per_batch} per batch.")
 
     domain_loaders = []
     domain_datasets = []

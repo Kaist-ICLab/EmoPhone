@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import logging
+
+logger = logging.getLogger(__name__)
+
 """
 Enhanced utility functions for stress detection with weighted OTDD distance calculation.
 Uses feature importance weights from training users to compute distance metrics.
@@ -57,7 +61,7 @@ def load_feature_importance_weights(
             break
 
     if importance_df is None:
-        print(f"Warning: Feature importance file not found for {user}, using uniform weights")
+        logger.info(f"Warning: Feature importance file not found for {user}, using uniform weights")
         return np.ones(len(feature_list)) / len(feature_list)
 
     if 'feature_name' in importance_df.columns:
@@ -222,14 +226,14 @@ def calculate_weighted_otdd_distance(
         idx_u = np.random.choice(len(features_u), max_samples, replace=False)
         features_u = features_u[idx_u]
         labels_u = labels_u[idx_u]
-        print(f"Subsampled user U from {len(features_u)} to {max_samples} samples")
+        logger.info(f"Subsampled user U from {len(features_u)} to {max_samples} samples")
 
     if len(features_v) > max_samples:
         np.random.seed(42)
         idx_v = np.random.choice(len(features_v), max_samples, replace=False)
         features_v = features_v[idx_v]
         labels_v = labels_v[idx_v]
-        print(f"Subsampled user V from {len(features_v)} to {max_samples} samples")
+        logger.info(f"Subsampled user V from {len(features_v)} to {max_samples} samples")
 
     # Features should already be normalized if using normalized dataset
 
@@ -339,7 +343,7 @@ def compute_pairwise_otdd_matrix(
     """
     user_ids = np.unique(group_indices)
     if cache_path and os.path.exists(cache_path):
-        print(f"Loading cached OTDD distance matrix from {cache_path}")
+        logger.info(f"Loading cached OTDD distance matrix from {cache_path}")
         return user_ids, np.load(cache_path)
 
     data = {
@@ -362,12 +366,12 @@ def compute_pairwise_otdd_matrix(
 
     pairs = [(i, j) for i in range(len(user_ids)) for j in range(i + 1, len(user_ids))]
 
-    print(f"Computing {len(pairs)} pairwise OTDD distances...")
+    logger.info(f"Computing {len(pairs)} pairwise OTDD distances...")
     if n_jobs == 1:
         # Sequential computation
         results = []
         for idx, (i, j) in enumerate(pairs):
-            print(f"OTDD {idx+1}/{len(pairs)}: {user_ids[i]} vs {user_ids[j]}")
+            logger.info(f"OTDD {idx+1}/{len(pairs)}: {user_ids[i]} vs {user_ids[j]}")
             result = _compute_otdd_for_pair(
                 i, j, user_ids, data, feature_list, user_importances, ot_params
             )
@@ -387,12 +391,12 @@ def compute_pairwise_otdd_matrix(
         D[i, j] = D[j, i] = dist
 
     if np.isnan(D).any():
-        print("Warning: Found NaN values in OTDD distance matrix")
+        logger.info("Warning: Found NaN values in OTDD distance matrix")
         max_val = np.nanmax(D)
         D[np.isnan(D)] = max_val * 10
 
     if cache_path:
-        print(f"Saving OTDD distance matrix to {cache_path}")
+        logger.info(f"Saving OTDD distance matrix to {cache_path}")
         np.save(cache_path, D)
 
     return user_ids, D
@@ -431,8 +435,8 @@ def calculate_user_similarity_ranking(
         weights = load_feature_importance_weights(u, feature_list, results_dir, results_subdir)
         user_importances[u] = weights
 
-    print(f"Computing OTDD distances with feature importance weights...")
-    print(f"Reference user {train_user} importance weights loaded: {user_importances[train_user] is not None}")
+    logger.info(f"Computing OTDD distances with feature importance weights...")
+    logger.info(f"Reference user {train_user} importance weights loaded: {user_importances[train_user] is not None}")
 
     # Compute OTDD distance matrix
     user_ids, distance_matrix = compute_pairwise_otdd_matrix(
@@ -457,11 +461,11 @@ def calculate_user_similarity_ranking(
     ranking_df = ranking_df.sort_values('distance_from_train').reset_index(drop=True)
     ranking_df['similarity_rank'] = range(1, len(ranking_df) + 1)
 
-    print(f"\nOTDD similarity ranking relative to {train_user}:")
-    print(f"Most similar users to {train_user}:")
+    logger.info(f"\nOTDD similarity ranking relative to {train_user}:")
+    logger.info(f"Most similar users to {train_user}:")
     for i, row in ranking_df.iterrows():
         if row['user'] != train_user:
-            print(f"{row['similarity_rank']:2d}. {row['user']} (OTDD distance: {row['distance_from_train']:.4f})")
+            logger.info(f"{row['similarity_rank']:2d}. {row['user']} (OTDD distance: {row['distance_from_train']:.4f})")
 
     return ranking_df
 
@@ -485,7 +489,7 @@ def load_selected_dataset(dataset_type: str = "full") -> Tuple[np.ndarray, np.nd
         filepath = "selected_users_dataset/full_216features_leaf.pkl"
     elif dataset_type in {"reduced_leaf", "leaf_reduced"}:
         filepath = "selected_users_dataset/reduced_49features_leaf.pkl"
-        print('yes')
+        logger.info('yes')
     else:
         raise ValueError("dataset_type must be 'full', 'reduced', 'full_leaf', or 'reduced_leaf'")
 
@@ -494,14 +498,14 @@ def load_selected_dataset(dataset_type: str = "full") -> Tuple[np.ndarray, np.nd
 
     # Convert DataFrame to numpy array if needed
     if hasattr(X, 'values'):
-        print("Converting DataFrame to numpy array...")
+        logger.info("Converting DataFrame to numpy array...")
         feature_names = list(X.columns)
         X = X.values
 
     # Fix feature names if they're incorrect (should match X.shape[1])
     if len(feature_names) != X.shape[1]:
-        print(f"Warning: Feature names length ({len(feature_names)}) doesn't match X.shape[1] ({X.shape[1]})")
-        print("Generating correct feature names...")
+        logger.info(f"Warning: Feature names length ({len(feature_names)}) doesn't match X.shape[1] ({X.shape[1]})")
+        logger.info("Generating correct feature names...")
         feature_names = [f'feature_{i}' for i in range(X.shape[1])]
 
     return X, y, users, timestamps, feature_names
@@ -509,16 +513,16 @@ def load_selected_dataset(dataset_type: str = "full") -> Tuple[np.ndarray, np.nd
 
 if __name__ == "__main__":
     # Example usage
-    print("Loading selected users dataset...")
+    logger.info("Loading selected users dataset...")
     X, y, users, timestamps, feature_names = load_selected_dataset("reduced_leaf")
 
-    print(f"Dataset shape: {X.shape}")
-    print(f"Users: {np.unique(users)}")
+    logger.info(f"Dataset shape: {X.shape}")
+    logger.info(f"Users: {np.unique(users)}")
 
     # Example: Calculate similarity ranking relative to P124
     features_df = pd.DataFrame(X, columns=feature_names)
 
-    print("\nCalculating weighted OTDD similarity ranking...")
+    logger.info("\nCalculating weighted OTDD similarity ranking...")
     ranking = calculate_user_similarity_ranking(
         train_user="P052",
         features=features_df,
@@ -528,4 +532,4 @@ if __name__ == "__main__":
         cache_path="otdd_distances_P052.npy"
     )
 
-    print(f"\nComplete ranking saved. Total users: {len(ranking)}")
+    logger.info(f"\nComplete ranking saved. Total users: {len(ranking)}")
