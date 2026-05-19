@@ -10,10 +10,10 @@ bash basemodel-benchmarking/scripts/<script>.sh
 
 | Script | Setting | Scope |
 |---|---|---|
-| `run_benchmark_resume.sh` | Setting A + Setting B | Full within-wave sweep: baselines + tabular NNs + DG + DA across `D-1 / D-2 / D-3` and every label available for the wave. Resume-aware (reads the progress CSV and skips completed `(model, dataset, label)` tuples). HPO 30 trials, fold1 mode. |
-| `run_benchmark_temporal_resume.sh` | Setting A | Per-user temporal split sweep with first-30-days windowing, 60/20/20 chronological partitioning, and label-diversity filter. Resume-aware. |
-| `run_cross_dataset.sh` | Setting C | Full cross-wave sweep over the six 1→1 and three 2→1 leave-one-dataset-out directions on the shared core labels. Resume-aware. |
-| `run_debug.sh` | Setting A / Setting B / Setting C | Quick local smoke run (1 HPO trial, 1 fold, ~3 epochs). Usage: `bash basemodel-benchmarking/scripts/run_debug.sh <dataset> <label>`. |
+| `run_setting_a.sh` | Setting A | Per-user temporal split sweep (first-30-days windowing, 60/20/20 chronological partitioning, label-diversity filter). Resume-aware. |
+| `run_setting_b.sh` | Setting B | Within-wave cross-user sweep: baselines + tabular NNs + DG + UDA across `D-1 / D-2 / D-3` and every label available for the wave. Resume-aware (reads the progress CSV and skips completed `(model, dataset, label)` tuples). HPO 30 trials, fold1 mode. |
+| `run_setting_c.sh` | Setting C | Cross-wave sweep over the six 1→1 and three 2→1 leave-one-dataset-out directions on the shared core labels. Resume-aware. |
+| `run_debug.sh` | Setting A / B / C | Quick local smoke run (1 HPO trial, 1 fold, ~3 epochs). Usage: `bash basemodel-benchmarking/scripts/run_debug.sh <dataset> <label>`. |
 
 ## Output locations
 
