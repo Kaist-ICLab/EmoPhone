@@ -1,5 +1,7 @@
 import copy
 import operator
+import os
+import sys
 from collections import OrderedDict
 from itertools import cycle
 from numbers import Number
@@ -10,15 +12,17 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
+from tqdm import tqdm
 
+# Make sibling top-level modules under ``basemodel-benchmarking/`` importable
+# (the dash in the folder name prevents Python from treating it as a package).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_BMB = os.path.normpath(os.path.join(_HERE, "..", "..", "basemodel-benchmarking"))
+_ROOT = os.path.normpath(os.path.join(_HERE, "..", ".."))
+for _p in (_BMB, _ROOT):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
-import os as _os, sys as _sys
-_HERE = _os.path.dirname(_os.path.abspath(__file__))
-_BMB = _os.path.normpath(_os.path.join(_HERE, '..', '..', 'basemodel-benchmarking'))
-_ROOT = _os.path.normpath(_os.path.join(_HERE, '..', '..'))
-for _p in (_BMB, _ROOT, _os.path.dirname(_HERE)):
-    if _p not in _sys.path:
-        _sys.path.insert(0, _p)
 from backbones import MLPFeaturizer, ResNetFeaturizer, TransformerFeaturizer
 from models import attach_training_metadata
 
@@ -986,7 +990,6 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     steps_per_epoch = max(10, int(len(X_train) / (batch_size * domains_per_batch)))
 
-    import copy as _copy
     best_val_loss = float('inf')
     best_model_state = None
     patience_counter = 0
@@ -996,7 +999,6 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
     epochs_ran = 0
     epoch_history = []
 
-    from tqdm import tqdm
     epoch_iterator = tqdm(range(epochs), desc="DG Training")
 
     for epoch in epoch_iterator:
@@ -1050,7 +1052,7 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_model_state = _copy.deepcopy(model.state_dict())
+            best_model_state = copy.deepcopy(model.state_dict())
             patience_counter = 0
             best_epoch = epoch_num
         else:

@@ -1,34 +1,42 @@
-import torch
-import torch.nn as nn
-import torch.autograd as autograd
-from torch.autograd import grad
-import numpy as np
-import torch.nn.functional as F
-from sklearn.metrics import roc_auc_score
+import copy
+import os
+import sys
+from itertools import cycle
 
-import os as _os, sys as _sys
-_HERE = _os.path.dirname(_os.path.abspath(__file__))
-_BMB = _os.path.normpath(_os.path.join(_HERE, '..', '..', 'basemodel-benchmarking'))
-_ROOT = _os.path.normpath(_os.path.join(_HERE, '..', '..'))
-for _p in (_BMB, _ROOT, _os.path.dirname(_HERE)):
-    if _p not in _sys.path:
-        _sys.path.insert(0, _p)
-from backbones import MLPFeaturizer, ResNetFeaturizer, TransformerFeaturizer
-from models import attach_training_metadata
+import numpy as np
+import torch
+import torch.autograd as autograd
+import torch.nn as nn
+import torch.nn.functional as F
 from scipy.spatial.distance import cdist
+from sklearn.metrics import roc_auc_score
+from torch.autograd import grad
+from tqdm import tqdm
+
+# Make sibling top-level modules under ``basemodel-benchmarking/`` importable
+# (the dash in the folder name prevents Python from treating it as a package).
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_BMB = os.path.normpath(os.path.join(_HERE, "..", "..", "basemodel-benchmarking"))
+_ROOT = os.path.normpath(os.path.join(_HERE, "..", ".."))
+for _p in (_BMB, _ROOT):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from backbones import MLPFeaturizer, ResNetFeaturizer, TransformerFeaturizer
+from models import attach_training_metadata, train_torch_model
 from domain_adaptation.models.da_tllib_losses import (
-    WarmStartGradientReverseLayer,
-    DomainDiscriminator,
-    DomainAdversarialLoss,
     ConditionalDomainAdversarialLoss,
-    GaussianKernel,
-    MultipleKernelMaximumMeanDiscrepancy,
-    JointMultipleKernelMaximumMeanDiscrepancy,
     CorrelationAlignmentLoss,
+    DomainAdversarialLoss,
+    DomainDiscriminator,
+    GaussianKernel,
+    JointMultipleKernelMaximumMeanDiscrepancy,
     MinimumClassConfusionLoss,
+    MultipleKernelMaximumMeanDiscrepancy,
+    WarmStartGradientReverseLayer,
     classifier_discrepancy,
-    mcd_entropy,
     entropy as tllib_entropy,
+    mcd_entropy,
 )
 
 class DAModel(nn.Module):
@@ -205,8 +213,6 @@ def train_deepcoral(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     target_iter = infinite_iterator(target_loader)
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -542,9 +548,6 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
                epochs=20, batch_size=64, lr=1e-4, weight_decay=5e-4, num_k=4, log_interval=100,
                patience=20,
                device='cuda' if torch.cuda.is_available() else 'cpu'):
-    import copy
-    from tqdm import tqdm
-
     model = model.to(device)
 
     if y_target is None:
@@ -628,7 +631,6 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
 
     epoch_iterator = tqdm(range(epochs), desc="CGDM Training")
     for ep in epoch_iterator:
-        from itertools import cycle
         iter_source = iter(train_loader)
         iter_target = cycle(test_loader)
         steps = len(train_loader)
@@ -782,7 +784,6 @@ def train_standard(model, X_train, y_train, X_val, y_val,
     """
     Simple supervised training wrapper (used for fallback in DA methods).
     """
-    from models import train_torch_model
     return train_torch_model(
         model,
         X_train,
@@ -888,8 +889,6 @@ def train_dann(model, X_train, y_train, d_train, X_val, y_val, d_val,
     )
     class_criterion = nn.CrossEntropyLoss()
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1021,8 +1020,6 @@ def train_cdan(model, X_train, y_train, d_train, X_val, y_val, d_val,
     )
     class_criterion = nn.CrossEntropyLoss()
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1144,8 +1141,6 @@ def train_mcc(model, X_train, y_train, d_train, X_val, y_val, d_val,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1249,8 +1244,6 @@ def train_dan(model, X_train, y_train, d_train, X_val, y_val, d_val,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1342,7 +1335,6 @@ class ADDA(nn.Module):
         self.source_model = DAModel(input_dim, num_classes, hparams)
 
         # Target encoder initialized from source encoder
-        import copy
         self.target_encoder = copy.deepcopy(self.source_model.feature_extractor)
 
         # Domain discriminator (binary, sigmoid output)
@@ -1372,8 +1364,6 @@ def train_adda(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     model = model.to(device)
     model.discriminator = model.discriminator.to(device)
-
-    from models import train_torch_model
 
     # Phase 1: source pretraining
     model.source_model = train_torch_model(
@@ -1412,8 +1402,6 @@ def train_adda(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     target_iter = _infinite_iterator(target_loader)
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1582,8 +1570,6 @@ def train_mcd(model, X_train, y_train, d_train, X_val, y_val, d_val,
     train_loader, val_loader, target_loader = _build_loaders(X_train, y_train, X_val, y_val, X_target, batch_size)
     target_iter = _infinite_iterator(target_loader)
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1727,8 +1713,6 @@ def train_jan(model, X_train, y_train, d_train, X_val, y_val, d_val,
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -1893,7 +1877,6 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
     model = model.to(device)
 
     # Phase 1: Source pretraining
-    from models import train_torch_model
     model = train_torch_model(
         model, X_train, y_train, X_val, y_val,
         epochs=epochs, batch_size=batch_size, lr=lr, patience=patience, device=device
@@ -1939,8 +1922,6 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
     interval_iter = max(1, max_iter // interval) if interval > 0 else max_iter
     iter_num = 0
 
-    import copy
-    from tqdm import tqdm
     best_val_score = -float('inf')
     best_model_state = None
     patience_counter = 0
@@ -2085,8 +2066,6 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
     if X_target is None:
         raise ValueError("CBST requires X_target for UDA. Use --uda to provide target samples.")
 
-    import copy
-
     model = model.to(device)
     weight_decay = model.hparams.get('weight_decay', 0.0)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -2133,7 +2112,6 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     # 1) Pretrain on source
     pretrain_epochs = model.hparams.get('cbst_pretrain_epochs', max(1, epochs // 2))
-    from tqdm import tqdm
     epoch_iterator = tqdm(range(pretrain_epochs), desc="CBST Pretrain")
     for epoch in epoch_iterator:
         model.train()

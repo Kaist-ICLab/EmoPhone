@@ -1,14 +1,18 @@
+import argparse
+import gc
+import json
 import os
 import sys
-import argparse
-import json
-import gc
+from pathlib import Path
 from typing import Dict, Tuple
-import pandas as pd
+
 import numpy as np
+import optuna
+import pandas as pd
 import torch
 import torch.nn as nn
-from pathlib import Path
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedShuffleSplit
+from sklearn.preprocessing import LabelEncoder
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
@@ -16,14 +20,63 @@ for _p in (_HERE, _ROOT):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from data_loader import BenchmarkDataset, rebinarize_personal_train_only, filter_split_for_label_diversity
-from models import XGBoostWrapper, LightGBMWrapper, MLP, ResNet, TabNetWrapper, WidedeepWrapper, DeepCTRWrapper, train_torch_model, evaluate_model, attach_training_metadata
-from domain_adaptation.models.da_models import DANN, CDAN, DAN, DeepCORAL, MCC, ADDA, MCD, JAN, SHOT, CBST, CGDM, MCDInferenceWrapper, train_mcd, train_dann, train_cdan, train_adda, train_jan, train_shot, train_cbst, train_deepcoral, train_mcc, train_dan, train_cgdm
-from domain_adaptation.models.domainbed_algos import ERM as DG_ERM, IRM, VREx, GroupDRO, MixStyle, MLDG, MASF, Fish, CSD, SagNet, train_dg_model
-from hparams_registry import get_hparams
-from sklearn.model_selection import StratifiedGroupKFold, StratifiedShuffleSplit
-from sklearn.preprocessing import LabelEncoder
 from benchmark_logger import BenchmarkLogger, evaluate_extended
+from data_loader import (
+    BenchmarkDataset,
+    filter_split_for_label_diversity,
+    rebinarize_personal_train_only,
+)
+from hparams_registry import get_hparams
+from models import (
+    DeepCTRWrapper,
+    LightGBMWrapper,
+    MLP,
+    ResNet,
+    TabNetWrapper,
+    WidedeepWrapper,
+    XGBoostWrapper,
+    attach_training_metadata,
+    evaluate_model,
+    train_torch_model,
+)
+from domain_adaptation.models.da_models import (
+    ADDA,
+    CBST,
+    CDAN,
+    CGDM,
+    DAN,
+    DANN,
+    DeepCORAL,
+    JAN,
+    MCC,
+    MCD,
+    MCDInferenceWrapper,
+    SHOT,
+    train_adda,
+    train_cbst,
+    train_cdan,
+    train_cgdm,
+    train_dan,
+    train_dann,
+    train_deepcoral,
+    train_jan,
+    train_mcc,
+    train_mcd,
+    train_shot,
+)
+from domain_adaptation.models.domainbed_algos import (
+    CSD,
+    ERM as DG_ERM,
+    Fish,
+    GroupDRO,
+    IRM,
+    MASF,
+    MLDG,
+    MixStyle,
+    SagNet,
+    VREx,
+    train_dg_model,
+)
 
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
@@ -617,7 +670,6 @@ def main():
 
     def _run_hpo(folds_for_hpo, *, label):
         print(f"Starting {label} with {args.hpo_trials} trials...")
-        from hparams_registry import get_hparams
 
         def objective(trial):
             hparams = get_hparams(args.model, args.dataset, backbone=args.backbone)
@@ -653,9 +705,8 @@ def main():
                     release_torch_memory()
             return float(np.mean(scores)) if scores else 0.0
 
-        import optuna as _optuna
-        _optuna.logging.set_verbosity(_optuna.logging.WARNING)
-        study = _optuna.create_study(direction='maximize', sampler=_optuna.samplers.TPESampler(seed=42))
+        optuna.logging.set_verbosity(optuna.logging.WARNING)
+        study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
         study.optimize(objective, n_trials=args.hpo_trials)
         best_params = dict(study.best_trial.user_attrs.get("resolved_hparams", {})) or dict(study.best_params)
         print("Best HPO params:", best_params)

@@ -10,16 +10,18 @@ Supports:
 """
 
 import argparse
+import copy
 import gc
 import json
 import os
-import sys
 import pickle
+import sys
 import warnings
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
+import optuna
 import pandas as pd
 import torch
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -31,11 +33,10 @@ for _p in (_HERE, _ROOT):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-import copy
 from benchmark import get_default_batch_size, train_model
+from benchmark_logger import BenchmarkLogger, evaluate_extended
 from hparams_registry import get_hparams
 from models import evaluate_model
-from benchmark_logger import BenchmarkLogger, evaluate_extended
 
 BASE_DATA_DIR = str((Path(__file__).resolve().parent.parent / 'data').resolve())
 FIXED_BATCH_SIZE = 16
@@ -396,9 +397,8 @@ def _run_hpo(args, train_dataset_key: str, X_tr, y_tr, d_tr, X_va, y_va, d_va, X
             model = None
             release_torch_memory()
 
-    import optuna as _optuna
-    _optuna.logging.set_verbosity(_optuna.logging.WARNING)
-    study = _optuna.create_study(direction='maximize', sampler=_optuna.samplers.TPESampler(seed=args.seed))
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=args.seed))
     study.optimize(objective, n_trials=args.hpo_trials)
     best_params = dict(study.best_trial.user_attrs.get("resolved_hparams", {})) or dict(study.best_params)
     print(f'  Best HPO params: {best_params}')
