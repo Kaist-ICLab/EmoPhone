@@ -21,6 +21,7 @@ class MixStyleLayer(nn.Module):
     """
     MixStyle layer (Zhou et al., 2021). Adapted to support 2D features.
     """
+
     def __init__(self, p=0.5, alpha=0.1, eps=1e-6, mix="random"):
         super().__init__()
         self.p = p
@@ -83,18 +84,19 @@ class MixStyle(DGModel):
     """
     MixStyle (Zhou et al., 2021). Training is ERM with MixStyle active.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__(input_dim, num_classes, hparams)
         self.mixstyle = MixStyleLayer(
-            p=self.hparams.get('mixstyle_p', 0.5),
-            alpha=self.hparams.get('mixstyle_alpha', 0.1),
-            eps=self.hparams.get('mixstyle_eps', 1e-6),
-            mix=self.hparams.get('mixstyle_mix', 'random')
+            p=self.hparams.get("mixstyle_p", 0.5),
+            alpha=self.hparams.get("mixstyle_alpha", 0.1),
+            eps=self.hparams.get("mixstyle_eps", 1e-6),
+            mix=self.hparams.get("mixstyle_mix", "random"),
         )
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
-            lr=self.hparams.get('lr', 1e-3),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            lr=self.hparams.get("lr", 1e-3),
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
 
     def forward(self, x):
@@ -113,6 +115,4 @@ class MixStyle(DGModel):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        return {'loss': loss.item()}
-
-
+        return {"loss": loss.item()}

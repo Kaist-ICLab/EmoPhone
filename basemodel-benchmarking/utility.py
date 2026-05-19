@@ -18,18 +18,16 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader, TensorDataset
-from otdd.pytorch.distance import DatasetDistance
 from joblib import Parallel, delayed
-
-
+from otdd.pytorch.distance import DatasetDistance
+from torch.utils.data import DataLoader, TensorDataset
 
 
 def load_feature_importance_weights(
     user: str,
     feature_list: List[str],
     results_dir: str = "selected_users_dataset/results",
-    results_subdir: str = None
+    results_subdir: str = None,
 ) -> np.ndarray:
     """
     Load feature importance weights for a specific user, matching the provided feature list.
@@ -51,7 +49,7 @@ def load_feature_importance_weights(
     else:
         feature_count = len(feature_list)
         if feature_count and feature_count <= 64:  # heuristic for reduced feature sets
-            candidate_paths.append(results_path / 'reduced' / f"{user}_feature_importance.csv")
+            candidate_paths.append(results_path / "reduced" / f"{user}_feature_importance.csv")
         candidate_paths.append(results_path / f"{user}_feature_importance.csv")
 
     importance_df = None
@@ -64,25 +62,25 @@ def load_feature_importance_weights(
         logger.info(f"Warning: Feature importance file not found for {user}, using uniform weights")
         return np.ones(len(feature_list)) / len(feature_list)
 
-    if 'feature_name' in importance_df.columns:
-        feature_column = 'feature_name'
-    elif 'feature' in importance_df.columns:
-        feature_column = 'feature'
+    if "feature_name" in importance_df.columns:
+        feature_column = "feature_name"
+    elif "feature" in importance_df.columns:
+        feature_column = "feature"
     else:
         feature_column = importance_df.columns[0]
 
-    if 'normalized_importance' in importance_df.columns:
-        importance_values = importance_df['normalized_importance'].to_numpy(dtype=float)
+    if "normalized_importance" in importance_df.columns:
+        importance_values = importance_df["normalized_importance"].to_numpy(dtype=float)
     else:
-        importance_values = importance_df['importance'].to_numpy(dtype=float)
+        importance_values = importance_df["importance"].to_numpy(dtype=float)
 
     feature_to_importance = dict(zip(importance_df[feature_column], importance_values))
     default_value = float(importance_values.mean()) if len(importance_values) else 1.0
 
-    weights = np.array([
-        feature_to_importance.get(feature_name, default_value)
-        for feature_name in feature_list
-    ], dtype=float)
+    weights = np.array(
+        [feature_to_importance.get(feature_name, default_value) for feature_name in feature_list],
+        dtype=float,
+    )
 
     if weights.sum() > 0:
         weights = weights / weights.sum()
@@ -102,7 +100,7 @@ class UserModelBundle:
         scaler: Optional[Any],
         feature_names: List[str],
         metadata: Dict[str, Any],
-        model_dir: Path
+        model_dir: Path,
     ) -> None:
         self.user = user
         self.boosters = boosters
@@ -147,8 +145,8 @@ class UserModelBundle:
 
 def load_user_model_bundle(
     user: str,
-    dataset_tag: str = 'reduced_49features_normalized',
-    model_root: str = 'selected_users_dataset/models'
+    dataset_tag: str = "reduced_49features_normalized",
+    model_root: str = "selected_users_dataset/models",
 ) -> UserModelBundle:
     """Load persisted LightGBM boosters and preprocessing artifacts for a user."""
 
@@ -166,23 +164,23 @@ def load_user_model_bundle(
                 user_dir = potential_dir
                 break
 
-    info_path = user_dir / 'model_info.json'
+    info_path = user_dir / "model_info.json"
     if not info_path.exists():
         raise FileNotFoundError(f"Model metadata not found for {user} at {info_path}")
 
-    with open(info_path, 'r') as f:
+    with open(info_path, "r") as f:
         metadata = json.load(f)
 
-    feature_names = metadata.get('feature_names', [])
+    feature_names = metadata.get("feature_names", [])
     boosters = []
-    for model_file in metadata.get('fold_model_files', []):
+    for model_file in metadata.get("fold_model_files", []):
         model_path = user_dir / model_file
         if not model_path.exists():
             raise FileNotFoundError(f"Missing model file for {user}: {model_path}")
         boosters.append(lgb.Booster(model_file=str(model_path)))
 
     scaler = None
-    scaler_file = metadata.get('scaler_file')
+    scaler_file = metadata.get("scaler_file")
     if scaler_file:
         scaler_path = user_dir / scaler_file
         if scaler_path.exists():
@@ -198,7 +196,7 @@ def calculate_weighted_otdd_distance(
     labels_v: np.ndarray,
     importances_u: np.ndarray,
     importances_v: np.ndarray,
-    ot_params: Dict[str, Any]
+    ot_params: Dict[str, Any],
 ) -> float:
     """
     Calculate the OTDD distance between two user datasets with weighted features.
@@ -285,7 +283,7 @@ def _compute_otdd_for_pair(
     data: Dict[str, Tuple[np.ndarray, np.ndarray]],
     feature_list: List[str],
     user_importances: Dict[str, np.ndarray],
-    ot_params: Dict[str, Any]
+    ot_params: Dict[str, Any],
 ) -> Tuple[int, int, float]:
     """
     Compute OTDD distance for a single pair of users.
@@ -308,9 +306,7 @@ def _compute_otdd_for_pair(
     Xv, yv = data[v_id]
     imp_u = user_importances.get(u_id, np.ones(len(feature_list)) / len(feature_list))
     imp_v = user_importances.get(v_id, np.ones(len(feature_list)) / len(feature_list))
-    dist = calculate_weighted_otdd_distance(
-        Xu, yu, Xv, yv, imp_u, imp_v, ot_params
-    )
+    dist = calculate_weighted_otdd_distance(Xu, yu, Xv, yv, imp_u, imp_v, ot_params)
     return i, j, dist
 
 
@@ -322,7 +318,7 @@ def compute_pairwise_otdd_matrix(
     user_importances: Dict[str, np.ndarray],
     device: str = "cpu",
     n_jobs: int = -1,
-    cache_path: str = None
+    cache_path: str = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute pairwise OTDD distances between users and return user IDs with the distance matrix.
@@ -347,10 +343,7 @@ def compute_pairwise_otdd_matrix(
         return user_ids, np.load(cache_path)
 
     data = {
-        u: (
-            features.loc[group_indices == u, feature_list].values,
-            labels[group_indices == u]
-        )
+        u: (features.loc[group_indices == u, feature_list].values, labels[group_indices == u])
         for u in user_ids
     }
 
@@ -361,7 +354,7 @@ def compute_pairwise_otdd_matrix(
         "λ_x": 1.0,
         "λ_y": 1.0,
         "entreg": 1e-2,
-        "device": device
+        "device": device,
     }
 
     pairs = [(i, j) for i in range(len(user_ids)) for j in range(i + 1, len(user_ids))]
@@ -378,7 +371,7 @@ def compute_pairwise_otdd_matrix(
             results.append(result)
     else:
         # Parallel computation
-        results = Parallel(n_jobs=n_jobs, backend='loky')(
+        results = Parallel(n_jobs=n_jobs, backend="loky")(
             delayed(_compute_otdd_for_pair)(
                 i, j, user_ids, data, feature_list, user_importances, ot_params
             )
@@ -410,7 +403,7 @@ def calculate_user_similarity_ranking(
     feature_list: List[str],
     results_dir: str = "selected_users_dataset/results",
     results_subdir: str = None,
-    cache_path: str = None
+    cache_path: str = None,
 ) -> pd.DataFrame:
     """
     Calculate similarity ranking of all users relative to a training user
@@ -436,12 +429,20 @@ def calculate_user_similarity_ranking(
         user_importances[u] = weights
 
     logger.info(f"Computing OTDD distances with feature importance weights...")
-    logger.info(f"Reference user {train_user} importance weights loaded: {user_importances[train_user] is not None}")
+    logger.info(
+        f"Reference user {train_user} importance weights loaded: {user_importances[train_user] is not None}"
+    )
 
     # Compute OTDD distance matrix
     user_ids, distance_matrix = compute_pairwise_otdd_matrix(
-        features, labels, group_indices, feature_list,
-        user_importances, device="cpu", n_jobs=1, cache_path=cache_path
+        features,
+        labels,
+        group_indices,
+        feature_list,
+        user_importances,
+        device="cpu",
+        n_jobs=1,
+        cache_path=cache_path,
     )
 
     # Find training user index
@@ -451,27 +452,33 @@ def calculate_user_similarity_ranking(
     distances_from_train = distance_matrix[train_idx, :]
 
     # Create ranking DataFrame
-    ranking_df = pd.DataFrame({
-        'user': user_ids,
-        'distance_from_train': distances_from_train,
-        'similarity_rank': np.argsort(distances_from_train) + 1
-    })
+    ranking_df = pd.DataFrame(
+        {
+            "user": user_ids,
+            "distance_from_train": distances_from_train,
+            "similarity_rank": np.argsort(distances_from_train) + 1,
+        }
+    )
 
     # Sort by similarity (lowest distance = highest similarity)
-    ranking_df = ranking_df.sort_values('distance_from_train').reset_index(drop=True)
-    ranking_df['similarity_rank'] = range(1, len(ranking_df) + 1)
+    ranking_df = ranking_df.sort_values("distance_from_train").reset_index(drop=True)
+    ranking_df["similarity_rank"] = range(1, len(ranking_df) + 1)
 
     logger.info(f"\nOTDD similarity ranking relative to {train_user}:")
     logger.info(f"Most similar users to {train_user}:")
     for i, row in ranking_df.iterrows():
-        if row['user'] != train_user:
-            logger.info(f"{row['similarity_rank']:2d}. {row['user']} (OTDD distance: {row['distance_from_train']:.4f})")
+        if row["user"] != train_user:
+            logger.info(
+                f"{row['similarity_rank']:2d}. {row['user']} (OTDD distance: {row['distance_from_train']:.4f})"
+            )
 
     return ranking_df
 
 
 # Load datasets convenience function
-def load_selected_dataset(dataset_type: str = "full") -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str]]:
+def load_selected_dataset(
+    dataset_type: str = "full",
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str]]:
     """
     Load selected users dataset.
 
@@ -489,24 +496,26 @@ def load_selected_dataset(dataset_type: str = "full") -> Tuple[np.ndarray, np.nd
         filepath = "selected_users_dataset/full_216features_leaf.pkl"
     elif dataset_type in {"reduced_leaf", "leaf_reduced"}:
         filepath = "selected_users_dataset/reduced_49features_leaf.pkl"
-        logger.info('yes')
+        logger.info("yes")
     else:
         raise ValueError("dataset_type must be 'full', 'reduced', 'full_leaf', or 'reduced_leaf'")
 
-    with open(filepath, 'rb') as f:
+    with open(filepath, "rb") as f:
         X, y, users, timestamps, feature_names = pickle.load(f)
 
     # Convert DataFrame to numpy array if needed
-    if hasattr(X, 'values'):
+    if hasattr(X, "values"):
         logger.info("Converting DataFrame to numpy array...")
         feature_names = list(X.columns)
         X = X.values
 
     # Fix feature names if they're incorrect (should match X.shape[1])
     if len(feature_names) != X.shape[1]:
-        logger.info(f"Warning: Feature names length ({len(feature_names)}) doesn't match X.shape[1] ({X.shape[1]})")
+        logger.info(
+            f"Warning: Feature names length ({len(feature_names)}) doesn't match X.shape[1] ({X.shape[1]})"
+        )
         logger.info("Generating correct feature names...")
-        feature_names = [f'feature_{i}' for i in range(X.shape[1])]
+        feature_names = [f"feature_{i}" for i in range(X.shape[1])]
 
     return X, y, users, timestamps, feature_names
 
@@ -529,7 +538,7 @@ if __name__ == "__main__":
         labels=y,
         group_indices=users,
         feature_list=feature_names,
-        cache_path="otdd_distances_P052.npy"
+        cache_path="otdd_distances_P052.npy",
     )
 
     logger.info(f"\nComplete ranking saved. Total users: {len(ranking)}")

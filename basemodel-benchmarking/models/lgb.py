@@ -19,7 +19,7 @@ class LightGBMWrapper(BaseEstimator, ClassifierMixin):
 
         eval_set = [(X_valid, y_valid)] if X_valid is not None else None
         callbacks = [lgb.early_stopping(self.patience, verbose=True)] if eval_set else None
-        self.model.fit(X_train, y_train, eval_set=eval_set, eval_metric='auc', callbacks=callbacks)
+        self.model.fit(X_train, y_train, eval_set=eval_set, eval_metric="auc", callbacks=callbacks)
         best_iteration = getattr(self.model, "best_iteration_", None)
         n_estimators = getattr(self.model, "n_estimators", None)
         attach_training_metadata(
@@ -28,7 +28,11 @@ class LightGBMWrapper(BaseEstimator, ClassifierMixin):
             best_epoch=best_iteration,
             epochs_ran=best_iteration or n_estimators,
             max_epochs=n_estimators,
-            early_stopped=bool(best_iteration is not None and n_estimators is not None and best_iteration < n_estimators),
+            early_stopped=bool(
+                best_iteration is not None
+                and n_estimators is not None
+                and best_iteration < n_estimators
+            ),
             model_selection_metric="val_auroc",
         )
         return self

@@ -22,6 +22,7 @@ class GroupDRO(ERM):
     """
     Group DRO (Sagawa et al., 2020)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__(input_dim, num_classes, hparams)
         self.register_buffer("q", torch.Tensor())
@@ -45,6 +46,4 @@ class GroupDRO(ERM):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        return {'loss': loss.item()}
-
-
+        return {"loss": loss.item()}

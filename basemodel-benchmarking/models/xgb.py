@@ -14,7 +14,9 @@ class XGBoostWrapper(BaseEstimator, ClassifierMixin):
         kwargs.setdefault("tree_method", "hist")
         # XGBoost 2.0+ requires early_stopping_rounds in constructor
         # use_label_encoder is deprecated/removed in 3.0+
-        self.model = xgb.XGBClassifier(eval_metric='auc', n_jobs=n_jobs, early_stopping_rounds=patience, **kwargs)
+        self.model = xgb.XGBClassifier(
+            eval_metric="auc", n_jobs=n_jobs, early_stopping_rounds=patience, **kwargs
+        )
 
     def fit(self, X, y, X_val=None, y_val=None):
         eval_set = [(X_val, y_val)] if X_val is not None else None
@@ -28,7 +30,11 @@ class XGBoostWrapper(BaseEstimator, ClassifierMixin):
             best_epoch=(best_iteration + 1) if best_iteration is not None else None,
             epochs_ran=(best_iteration + 1) if best_iteration is not None else n_estimators,
             max_epochs=n_estimators,
-            early_stopped=bool(best_iteration is not None and n_estimators is not None and best_iteration + 1 < n_estimators),
+            early_stopped=bool(
+                best_iteration is not None
+                and n_estimators is not None
+                and best_iteration + 1 < n_estimators
+            ),
             model_selection_metric="val_auroc",
         )
         return self
@@ -38,4 +44,3 @@ class XGBoostWrapper(BaseEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
-

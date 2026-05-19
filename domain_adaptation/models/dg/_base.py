@@ -31,50 +31,50 @@ class FeatureClassifier(nn.Module):
 
 
 def _build_featurizer(input_dim, hparams):
-    backbone_name = hparams.get('backbone', 'MLP')
-    dropout = hparams.get('dropout', 0.3)
-    hidden_dim = hparams.get('hidden_dim', 256)
+    backbone_name = hparams.get("backbone", "MLP")
+    dropout = hparams.get("dropout", 0.3)
+    hidden_dim = hparams.get("hidden_dim", 256)
 
-    if backbone_name == 'MLP':
+    if backbone_name == "MLP":
         return MLPFeaturizer(
             input_dim,
             hidden_dim=hidden_dim,
             output_dim=128,
-            num_layers=hparams.get('num_layers', 3),
-            dropout=dropout
+            num_layers=hparams.get("num_layers", 3),
+            dropout=dropout,
         )
-    if backbone_name == 'ResNet':
+    if backbone_name == "ResNet":
         return ResNetFeaturizer(
             input_dim,
             hidden_dim=hidden_dim,
             output_dim=128,
-            num_blocks=hparams.get('num_blocks', 2),
-            dropout=dropout
+            num_blocks=hparams.get("num_blocks", 2),
+            dropout=dropout,
         )
-    if backbone_name == 'Transformer':
+    if backbone_name == "Transformer":
         return TransformerFeaturizer(
             input_dim,
             hidden_dim=128,
             output_dim=128,
-            num_layers=hparams.get('num_layers', 2),
-            nhead=hparams.get('nhead', 4),
-            dropout=dropout
+            num_layers=hparams.get("num_layers", 2),
+            nhead=hparams.get("nhead", 4),
+            dropout=dropout,
         )
 
     raise ValueError(f"Unknown backbone: {backbone_name}")
 
 
 def _build_classifier(in_dim, num_classes, hparams):
-    nonlinear = hparams.get('nonlinear_classifier', False)
-    dropout = hparams.get('classifier_dropout', 0.0)
-    hidden_dim = hparams.get('classifier_hidden_dim', in_dim)
+    nonlinear = hparams.get("nonlinear_classifier", False)
+    dropout = hparams.get("classifier_dropout", 0.0)
+    hidden_dim = hparams.get("classifier_hidden_dim", in_dim)
     if not nonlinear:
         return nn.Linear(in_dim, num_classes)
     return nn.Sequential(
         nn.Linear(in_dim, hidden_dim),
         nn.ReLU(),
         nn.Dropout(dropout),
-        nn.Linear(hidden_dim, num_classes)
+        nn.Linear(hidden_dim, num_classes),
     )
 
 
@@ -82,12 +82,13 @@ class DGModel(nn.Module):
     """
     Base class for Domain Generalization models.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__()
         self.input_dim = input_dim
         self.num_classes = num_classes
         self.hparams = hparams if hparams else {}
-        self.num_domains = self.hparams.get('num_domains')
+        self.num_domains = self.hparams.get("num_domains")
 
         self.featurizer = _build_featurizer(input_dim, self.hparams)
         self.classifier = _build_classifier(self.featurizer.output_dim, num_classes, self.hparams)
@@ -104,5 +105,3 @@ class DGModel(nn.Module):
         Input: minibatches is a list of (x, y) pairs, one per domain.
         """
         raise NotImplementedError
-
-

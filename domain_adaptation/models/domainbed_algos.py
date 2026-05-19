@@ -11,13 +11,13 @@ continue to work unchanged.
 
 from .dg import (  # noqa: F401
     CSD,
-    DGModel,
     ERM,
-    Fish,
-    GroupDRO,
     IRM,
     MASF,
     MLDG,
+    DGModel,
+    Fish,
+    GroupDRO,
     MixStyle,
     SagNet,
     VREx,

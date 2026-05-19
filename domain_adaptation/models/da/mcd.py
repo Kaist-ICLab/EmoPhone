@@ -9,12 +9,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from .._da_helpers import (
-    DAModel,
     DEFAULT_BATCH_SIZE,
     DEFAULT_DEVICE,
     DEFAULT_EPOCHS,
     DEFAULT_LR,
     DEFAULT_PATIENCE,
+    DAModel,
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
@@ -28,6 +28,7 @@ class MCD(DAModel):
     Maximum Classifier Discrepancy (MCD).
     Two classifiers over a shared feature extractor.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super(MCD, self).__init__(input_dim, num_classes, hparams)
         feat_dim = self.feature_extractor.output_dim
@@ -60,8 +61,12 @@ class MCDInferenceWrapper(nn.Module):
 
 def train_mcd(
     model,
-    X_train, y_train, d_train,
-    X_val, y_val, d_val,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
     lr: float = DEFAULT_LR,
@@ -80,24 +85,31 @@ def train_mcd(
         raise ValueError("MCD requires X_target for UDA. Use --uda to provide target samples.")
 
     model = model.to(device)
-    weight_decay = model.hparams.get('weight_decay', 0.0)
-    trade_off = model.hparams.get('mcd_trade_off', 1.0)
-    k_steps = model.hparams.get('mcd_k', 4)
+    weight_decay = model.hparams.get("weight_decay", 0.0)
+    trade_off = model.hparams.get("mcd_trade_off", 1.0)
+    k_steps = model.hparams.get("mcd_k", 4)
 
-    optimizer_g = torch.optim.Adam(model.feature_extractor.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer_g = torch.optim.Adam(
+        model.feature_extractor.parameters(), lr=lr, weight_decay=weight_decay
+    )
     optimizer_c = torch.optim.Adam(
         list(model.classifier1.parameters()) + list(model.classifier2.parameters()),
         lr=lr,
-        weight_decay=weight_decay
+        weight_decay=weight_decay,
     )
     criterion = nn.CrossEntropyLoss()
 
-    train_loader, val_loader, target_loader = _build_loaders(X_train, y_train, X_val, y_val, X_target, batch_size)
+    train_loader, val_loader, target_loader = _build_loaders(
+        X_train, y_train, X_val, y_val, X_target, batch_size
+    )
     target_iter = _infinite_iterator(target_loader)
 
     tracker = EarlyStopTracker(
-        patience=patience, epochs=epochs, batch_size=batch_size,
-        lr=lr, weight_decay=weight_decay,
+        patience=patience,
+        epochs=epochs,
+        batch_size=batch_size,
+        lr=lr,
+        weight_decay=weight_decay,
     )
 
     epoch_iterator = tqdm(range(epochs), desc="MCD Training")
@@ -107,7 +119,7 @@ def train_mcd(
 
         for X_s, y_s in train_loader:
             X_s, y_s = X_s.to(device), y_s.to(device)
-            X_t, = next(target_iter)
+            (X_t,) = next(target_iter)
             X_t = X_t.to(device)
 
             # Step A: train G, C1, C2 on source
@@ -151,14 +163,18 @@ def train_mcd(
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
 
-        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
-                          val_loss=val_loss, val_auroc=val_auroc,
-                          iterator=epoch_iterator):
+        if tracker.record(
+            model,
+            epoch_num=epoch + 1,
+            train_loss=train_loss,
+            val_loss=val_loss,
+            val_auroc=val_auroc,
+            iterator=epoch_iterator,
+        ):
             break
 
     optimizer_label = f"{optimizer_g.__class__.__name__}+{optimizer_c.__class__.__name__}"
-    return tracker.finalize(model, optimizer=optimizer_label,
-                            extra_meta={"mcd_k": k_steps})
-    
-# --- JAN: Joint Adaptation Network ---
+    return tracker.finalize(model, optimizer=optimizer_label, extra_meta={"mcd_k": k_steps})
 
+
+# --- JAN: Joint Adaptation Network ---

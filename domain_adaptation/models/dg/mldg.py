@@ -22,9 +22,10 @@ class MLDG(ERM):
     """
     Meta-Learning for Domain Generalization (Li et al., 2018)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__(input_dim, num_classes, hparams)
-        self.num_meta_test = self.hparams.get('n_meta_test', 1)
+        self.num_meta_test = self.hparams.get("n_meta_test", 1)
 
     def update(self, minibatches, unlabeled=None, **kwargs):
         num_mb = len(minibatches)
@@ -40,7 +41,7 @@ class MLDG(ERM):
             inner_opt = torch.optim.Adam(
                 inner_net.parameters(),
                 lr=self.hparams.get("lr", 1e-3),
-                weight_decay=self.hparams.get('weight_decay', 0.0)
+                weight_decay=self.hparams.get("weight_decay", 0.0),
             )
 
             inner_obj = F.cross_entropy(inner_net(xi), yi)
@@ -58,20 +59,21 @@ class MLDG(ERM):
             loss_inner_j = F.cross_entropy(inner_net(xj), yj)
             grad_inner_j = autograd.grad(loss_inner_j, inner_net.parameters(), allow_unused=True)
 
-            objective += (self.hparams.get('mldg_beta', 1.0) * loss_inner_j).item()
+            objective += (self.hparams.get("mldg_beta", 1.0) * loss_inner_j).item()
 
             for p, g_j in zip(self.network.parameters(), grad_inner_j):
                 if g_j is not None:
-                    p.grad.data.add_(self.hparams.get('mldg_beta', 1.0) * g_j.data / num_mb)
+                    p.grad.data.add_(self.hparams.get("mldg_beta", 1.0) * g_j.data / num_mb)
 
         objective /= len(minibatches)
 
         self.optimizer.step()
-        return {'loss': objective}
+        return {"loss": objective}
 
 
 class ParamDict(OrderedDict):
     """ParamDict from DomainBed."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -100,5 +102,3 @@ class ParamDict(OrderedDict):
 
     def __truediv__(self, other):
         return self._prototype(other, operator.truediv)
-
-

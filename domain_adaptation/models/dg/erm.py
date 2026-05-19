@@ -21,12 +21,13 @@ class ERM(DGModel):
     """
     Empirical Risk Minimization (Standard Training)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__(input_dim, num_classes, hparams)
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
-            lr=self.hparams.get('lr', 1e-3),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            lr=self.hparams.get("lr", 1e-3),
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
 
     def update(self, minibatches, unlabeled=None, **kwargs):
@@ -37,6 +38,4 @@ class ERM(DGModel):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        return {'loss': loss.item()}
-
-
+        return {"loss": loss.item()}

@@ -26,7 +26,6 @@ from typing import Iterable, Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-
 # ── Constants ──────────────────────────────────────────────────────────────────
 GENDER_COLORS: dict[str, str] = {"M": "#4A90E2", "F": "#FF69B4"}
 COLORS: dict[str, str] = {"D-1": "#2C7BB6", "D-2": "#D7191C", "D-3": "#1A9641"}
@@ -35,8 +34,14 @@ WAVE_KEYS: list[str] = ["D-1", "D-2", "D-3"]
 WAVE_TO_DIR: dict[str, str] = {"D-1": "D1", "D-2": "D2", "D-3": "D3"}
 
 TRAIT_COLS: list[str] = [
-    "age", "openness", "conscientiousness", "neuroticism",
-    "extraversion", "agreeableness", "pss10", "ghq12",
+    "age",
+    "openness",
+    "conscientiousness",
+    "neuroticism",
+    "extraversion",
+    "agreeableness",
+    "pss10",
+    "ghq12",
 ]
 LABEL_NAMES: list[str] = ["valence", "arousal", "stress", "disturbance"]
 
@@ -45,8 +50,14 @@ W1_W2_ONLY: list[str] = ["Attention", "Mental", "Duration"]
 W1_ONLY: list[str] = ["Change"]
 W2_ONLY: list[str] = ["Changed Valence", "Changed Arousal"]
 W3_ONLY: list[str] = [
-    "Happy", "Relaxed", "Cheerful", "Content",
-    "Sad", "Angry", "Anxious", "Depressed",
+    "Happy",
+    "Relaxed",
+    "Cheerful",
+    "Content",
+    "Sad",
+    "Angry",
+    "Anxious",
+    "Depressed",
 ]
 ALL_LABELS: list[str] = SHARED_LABELS + W1_W2_ONLY + W1_ONLY + W2_ONLY + W3_ONLY
 
@@ -69,6 +80,7 @@ SENSOR_TS_COL = "PIF#timestamp"
 def set_paper_style() -> None:
     """Set matplotlib/seaborn publication-style theme."""
     import seaborn as sns
+
     sns.set_theme(
         context="paper",
         style="white",
@@ -155,22 +167,40 @@ def get_pkl_paths(data_root: str | None = None) -> dict[str, str]:
 
 # ── ESM / UserInfo loaders ─────────────────────────────────────────────────────
 _ESM_RENAME_MAP: dict[str, str] = {
-    "pcode": "Pcode", "responseTime": "ResponseTime",
-    "actualTriggerTime": "TriggerTime", "intendedTriggerTime": "TriggerTime",
-    "reactionTime": "ReactionTime", "valence": "Valence", "arousal": "Arousal",
-    "stress": "Stress", "disturbance": "Task Disturbance", "duration": "Duration",
-    "attention": "Attention", "mental": "Mental",
-    "valenceChange": "Changed Valence", "arousalChange": "Changed Arousal",
-    "happy": "Happy", "relaxed": "Relaxed", "cheerful": "Cheerful",
-    "content": "Content", "sad": "Sad", "anxious": "Anxious",
-    "depressed": "Depressed", "angry": "Angry", "change": "Change",
+    "pcode": "Pcode",
+    "responseTime": "ResponseTime",
+    "actualTriggerTime": "TriggerTime",
+    "intendedTriggerTime": "TriggerTime",
+    "reactionTime": "ReactionTime",
+    "valence": "Valence",
+    "arousal": "Arousal",
+    "stress": "Stress",
+    "disturbance": "Task Disturbance",
+    "duration": "Duration",
+    "attention": "Attention",
+    "mental": "Mental",
+    "valenceChange": "Changed Valence",
+    "arousalChange": "Changed Arousal",
+    "happy": "Happy",
+    "relaxed": "Relaxed",
+    "cheerful": "Cheerful",
+    "content": "Content",
+    "sad": "Sad",
+    "anxious": "Anxious",
+    "depressed": "Depressed",
+    "angry": "Angry",
+    "change": "Change",
 }
 
 _USERINFO_RENAME_MAP: dict[str, str] = {
-    "pcode": "Pcode", "openness": "Openness",
-    "conscientiousness": "Conscientiousness", "neuroticism": "Neuroticism",
-    "extraversion": "Extraversion", "agreeableness": "Agreeableness",
-    "age": "Age", "gender": "Gender",
+    "pcode": "Pcode",
+    "openness": "Openness",
+    "conscientiousness": "Conscientiousness",
+    "neuroticism": "Neuroticism",
+    "extraversion": "Extraversion",
+    "agreeableness": "Agreeableness",
+    "age": "Age",
+    "gender": "Gender",
 }
 
 
@@ -238,9 +268,7 @@ def load_wave_esm_userinfo(
 
     esm_by_wave = {k: load_esm(k, root, dirs) for k in wave_keys}
     userinfo_by_wave = (
-        {k: load_userinfo(k, root, dirs) for k in wave_keys}
-        if include_userinfo
-        else {}
+        {k: load_userinfo(k, root, dirs) for k in wave_keys} if include_userinfo else {}
     )
 
     non_empty = [df for df in esm_by_wave.values() if not df.empty]
@@ -357,21 +385,26 @@ def extract_gender(df: pd.DataFrame) -> pd.Series:
 
 # ── Pickle data loaders ────────────────────────────────────────────────────────
 _META_COLS_ORDER: list[str] = [
-    "META#dataset", "PIF#participantID", "PIF#stress_label",
-    "PIF#time_offset", "PIF#timestamp",
+    "META#dataset",
+    "PIF#participantID",
+    "PIF#stress_label",
+    "PIF#time_offset",
+    "PIF#timestamp",
 ]
 
 
 def load_and_attach(path: str, dataset_tag: str) -> pd.DataFrame:
     """Load a pickle of ``(features, y, groups, t, datetimes)`` and attach metadata."""
     df, y, groups, t, datetimes = pd.read_pickle(path)
-    meta = pd.DataFrame({
-        "PIF#participantID": groups,
-        "PIF#stress_label": y,
-        "PIF#time_offset": t,
-        "PIF#timestamp": datetimes,
-        "META#dataset": dataset_tag,
-    })
+    meta = pd.DataFrame(
+        {
+            "PIF#participantID": groups,
+            "PIF#stress_label": y,
+            "PIF#time_offset": t,
+            "PIF#timestamp": datetimes,
+            "META#dataset": dataset_tag,
+        }
+    )
     out = pd.concat([df.reset_index(drop=True), meta.reset_index(drop=True)], axis=1)
     return out[_META_COLS_ORDER + [c for c in out.columns if c not in _META_COLS_ORDER]]
 
@@ -451,7 +484,9 @@ def apply_28d_window(
         dsub = base[base[dataset_col] == ds].copy()
         before = len(dsub)
         if dsub.empty:
-            rows.append({dataset_col: ds, "rows_before": 0, "rows_after": 0, "participants_after": 0})
+            rows.append(
+                {dataset_col: ds, "rows_before": 0, "rows_after": 0, "participants_after": 0}
+            )
             continue
 
         anchor_date = dsub["_ts"].dt.normalize().min()
@@ -465,12 +500,14 @@ def apply_28d_window(
 
         kept_sub = dsub.loc[in_window].drop(columns=["_ts"])
         kept.append(kept_sub)
-        rows.append({
-            dataset_col: ds,
-            "rows_before": before,
-            "rows_after": len(kept_sub),
-            "participants_after": kept_sub[pid_col].nunique(),
-        })
+        rows.append(
+            {
+                dataset_col: ds,
+                "rows_before": before,
+                "rows_after": len(kept_sub),
+                "participants_after": kept_sub[pid_col].nunique(),
+            }
+        )
 
     filtered = pd.concat(kept, ignore_index=True) if kept else df.iloc[0:0].copy()
     return filtered, pd.DataFrame(rows)
@@ -483,7 +520,13 @@ def load_esm_28d(
     wave_to_dir: Mapping[str, str] | None = None,
     include_userinfo: bool = True,
     include_study_day: bool = True,
-) -> tuple[dict[str, pd.DataFrame], dict[str, pd.DataFrame], pd.DataFrame, dict[str, pd.DataFrame], pd.DataFrame]:
+) -> tuple[
+    dict[str, pd.DataFrame],
+    dict[str, pd.DataFrame],
+    pd.DataFrame,
+    dict[str, pd.DataFrame],
+    pd.DataFrame,
+]:
     """Load ESM/UserInfo, apply the 28-day window, and split the windowed frame.
 
     Returns
@@ -528,26 +571,51 @@ def load_sensor_28d(
 
 __all__ = [
     # constants
-    "GENDER_COLORS", "COLORS", "WAVE_LABELS", "WAVE_KEYS", "WAVE_TO_DIR",
-    "TRAIT_COLS", "LABEL_NAMES",
-    "SHARED_LABELS", "W1_W2_ONLY", "W1_ONLY", "W2_ONLY", "W3_ONLY",
-    "ALL_LABELS", "COVERAGE_BY_WAVE",
-    "ESM_DATASET_COL", "ESM_PID_COL", "ESM_TS_COL",
-    "SENSOR_DATASET_COL", "SENSOR_PID_COL", "SENSOR_TS_COL",
+    "GENDER_COLORS",
+    "COLORS",
+    "WAVE_LABELS",
+    "WAVE_KEYS",
+    "WAVE_TO_DIR",
+    "TRAIT_COLS",
+    "LABEL_NAMES",
+    "SHARED_LABELS",
+    "W1_W2_ONLY",
+    "W1_ONLY",
+    "W2_ONLY",
+    "W3_ONLY",
+    "ALL_LABELS",
+    "COVERAGE_BY_WAVE",
+    "ESM_DATASET_COL",
+    "ESM_PID_COL",
+    "ESM_TS_COL",
+    "SENSOR_DATASET_COL",
+    "SENSOR_PID_COL",
+    "SENSOR_TS_COL",
     # style
     "set_paper_style",
     # parsing / paths
-    "parse_timestamp", "to_utc_local",
-    "get_data_root", "get_pkl_paths",
+    "parse_timestamp",
+    "to_utc_local",
+    "get_data_root",
+    "get_pkl_paths",
     # loaders
-    "load_esm", "load_userinfo", "load_wave_esm_userinfo",
-    "load_and_attach", "load_label_pickle_with_meta",
+    "load_esm",
+    "load_userinfo",
+    "load_wave_esm_userinfo",
+    "load_and_attach",
+    "load_label_pickle_with_meta",
     "load_df_X_combined",
-    "load_esm_28d", "load_sensor_28d",
+    "load_esm_28d",
+    "load_sensor_28d",
     # analytical helpers
-    "align_dates_relative", "add_study_day",
-    "normalize_label_series", "get_label_series",
-    "esm_counts_per_person", "compute_label_corr", "user_means",
-    "split_by_wave", "extract_gender",
+    "align_dates_relative",
+    "add_study_day",
+    "normalize_label_series",
+    "get_label_series",
+    "esm_counts_per_person",
+    "compute_label_corr",
+    "user_means",
+    "split_by_wave",
+    "extract_gender",
     "apply_28d_window",
 ]

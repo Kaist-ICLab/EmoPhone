@@ -37,6 +37,7 @@ class Fish(nn.Module):
     """
     Fish: Gradient Matching for Domain Generalization (Shi et al., 2021)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__()
         self.hparams = hparams if hparams else {}
@@ -47,21 +48,18 @@ class Fish(nn.Module):
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
             lr=self.hparams.get("lr", 1e-3),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
         self.optimizer_inner_state = None
 
     def create_clone(self, device):
         self.network_inner = WholeFish(
-            self.input_dim,
-            self.num_classes,
-            self.hparams,
-            weights=self.network.state_dict()
+            self.input_dim, self.num_classes, self.hparams, weights=self.network.state_dict()
         ).to(device)
         self.optimizer_inner = torch.optim.Adam(
             self.network_inner.parameters(),
             lr=self.hparams.get("lr", 1e-3),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
         if self.optimizer_inner_state is not None:
             self.optimizer_inner.load_state_dict(self.optimizer_inner_state)
@@ -86,13 +84,11 @@ class Fish(nn.Module):
         meta_weights = self.fish(
             meta_weights=self.network.state_dict(),
             inner_weights=self.network_inner.state_dict(),
-            lr_meta=self.hparams.get("meta_lr", self.hparams.get("fish_meta_lr", 0.5))
+            lr_meta=self.hparams.get("meta_lr", self.hparams.get("fish_meta_lr", 0.5)),
         )
         self.network.reset_weights(meta_weights)
 
-        return {'loss': loss.item() if loss is not None else 0.0}
+        return {"loss": loss.item() if loss is not None else 0.0}
 
     def predict(self, x):
         return self.network(x)
-
-

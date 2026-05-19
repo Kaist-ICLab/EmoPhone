@@ -27,11 +27,11 @@ class GradientReversalLayer(autograd.Function):
         return output, None
 
 
-
 class CGDMBackbone(nn.Module):
     """
     CGDM ResBottle (MLP for tabular features).
     """
+
     def __init__(self, input_dim=4):
         super(CGDMBackbone, self).__init__()
         self.fc1 = nn.Linear(input_dim, 512)
@@ -63,6 +63,7 @@ class CGDMClassifier(nn.Module):
     """
     CGDM ResClassifier (MLP classifier head).
     """
+
     def __init__(self, num_classes=3, num_layer=4, num_unit=128, prob=0.5, middle=64):
         super(CGDMClassifier, self).__init__()
         layers = []
@@ -97,11 +98,22 @@ class CGDM(nn.Module):
     """
     CGDM model container: feature extractor + two classifiers.
     """
+
     def __init__(self, input_dim=8, num_classes=6):
         super(CGDM, self).__init__()
         self.feature_extractor = CGDMBackbone(input_dim=input_dim)
-        self.classifier1 = CGDMClassifier(num_classes=num_classes, num_layer=2, num_unit=self.feature_extractor.output_num(), middle=1000)
-        self.classifier2 = CGDMClassifier(num_classes=num_classes, num_layer=2, num_unit=self.feature_extractor.output_num(), middle=1000)
+        self.classifier1 = CGDMClassifier(
+            num_classes=num_classes,
+            num_layer=2,
+            num_unit=self.feature_extractor.output_num(),
+            middle=1000,
+        )
+        self.classifier2 = CGDMClassifier(
+            num_classes=num_classes,
+            num_layer=2,
+            num_unit=self.feature_extractor.output_num(),
+            middle=1000,
+        )
 
     def forward(self, x):
         feat = self.feature_extractor(x)
@@ -116,13 +128,13 @@ class CGDM(nn.Module):
 
 def weights_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    if classname.find("Conv") != -1:
         m.weight.data.normal_(0.0, 0.01)
         m.bias.data.normal_(0.0, 0.01)
-    elif classname.find('BatchNorm') != -1:
+    elif classname.find("BatchNorm") != -1:
         m.weight.data.normal_(1.0, 0.01)
         m.bias.data.fill_(0)
-    elif classname.find('Linear') != -1:
+    elif classname.find("Linear") != -1:
         m.weight.data.normal_(0.0, 0.01)
         m.bias.data.normal_(0.0, 0.01)
 
@@ -155,7 +167,7 @@ def Weighted_CrossEntropy(input_, labels):
     entropy = torch.sum(entropy, dim=1)
     weight = 1.0 + torch.exp(-entropy)
     weight = weight / torch.sum(weight).detach().item()
-    return torch.mean(weight * nn.CrossEntropyLoss(reduction='none')(input_, labels))
+    return torch.mean(weight * nn.CrossEntropyLoss(reduction="none")(input_, labels))
 
 
 def obtain_label(loader, netE, netC1, netC2, device):
@@ -186,7 +198,9 @@ def obtain_label(loader, netE, netC1, netC2, device):
     label_np = all_label.float().cpu().numpy()
     has_labels = np.unique(label_np).size > 1
     if has_labels:
-        accuracy = torch.sum(predict.to(device).float() == all_label.to(device)).item() / float(all_label.size()[0])
+        accuracy = torch.sum(predict.to(device).float() == all_label.to(device)).item() / float(
+            all_label.size()[0]
+        )
 
     all_fea = torch.cat((all_fea, torch.ones(all_fea.size(0), 1)), 1)
     all_fea = (all_fea.t() / torch.norm(all_fea, p=2, dim=1)).t()
@@ -196,7 +210,7 @@ def obtain_label(loader, netE, netC1, netC2, device):
     aff = all_output.float().cpu().numpy()
     initc = aff.transpose().dot(all_fea)
     initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
-    dd = cdist(all_fea, initc, 'cosine')
+    dd = cdist(all_fea, initc, "cosine")
     pred_label = dd.argmin(axis=1)
     if has_labels:
         acc = np.sum(pred_label == label_np) / len(all_fea)
@@ -205,12 +219,12 @@ def obtain_label(loader, netE, netC1, netC2, device):
         aff = np.eye(K)[pred_label]
         initc = aff.transpose().dot(all_fea)
         initc = initc / (1e-8 + aff.sum(axis=0)[:, None])
-        dd = cdist(all_fea, initc, 'cosine')
+        dd = cdist(all_fea, initc, "cosine")
         pred_label = dd.argmin(axis=1)
         if has_labels:
             acc = np.sum(pred_label == label_np) / len(all_fea)
 
-    return pred_label.astype('int')
+    return pred_label.astype("int")
 
 
 def gradient_discrepancy_loss_margin(p_s1, p_s2, s_y, p_t1, p_t2, t_y, netE, netC1, netC2):
@@ -227,8 +241,12 @@ def gradient_discrepancy_loss_margin(p_s1, p_s2, s_y, p_t1, p_t2, t_y, netE, net
     grad_cossim22 = []
 
     for _, p in netC1.named_parameters():
-        real_grad = grad([src_loss1], [p], create_graph=True, only_inputs=True, allow_unused=False)[0]
-        fake_grad = grad([tgt_loss1], [p], create_graph=True, only_inputs=True, allow_unused=False)[0]
+        real_grad = grad([src_loss1], [p], create_graph=True, only_inputs=True, allow_unused=False)[
+            0
+        ]
+        fake_grad = grad([tgt_loss1], [p], create_graph=True, only_inputs=True, allow_unused=False)[
+            0
+        ]
 
         if len(p.shape) > 1:
             _cossim = F.cosine_similarity(fake_grad, real_grad, dim=1).mean()
@@ -256,11 +274,23 @@ def gradient_discrepancy_loss_margin(p_s1, p_s2, s_y, p_t1, p_t2, t_y, netE, net
     return gm_loss
 
 
-def train_cgdm(model, X_source, y_source, X_target, y_target=None,
-               X_val=None, y_val=None,
-               epochs=20, batch_size=64, lr=1e-4, weight_decay=5e-4, num_k=4, log_interval=100,
-               patience=20,
-               device='cuda' if torch.cuda.is_available() else 'cpu'):
+def train_cgdm(
+    model,
+    X_source,
+    y_source,
+    X_target,
+    y_target=None,
+    X_val=None,
+    y_val=None,
+    epochs=20,
+    batch_size=64,
+    lr=1e-4,
+    weight_decay=5e-4,
+    num_k=4,
+    log_interval=100,
+    patience=20,
+    device="cuda" if torch.cuda.is_available() else "cpu",
+):
     model = model.to(device)
 
     if y_target is None:
@@ -285,16 +315,24 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
     train_dataset = torch.utils.data.TensorDataset(X_source_t, y_source_t)
     test_dataset = IndexedTensorDataset(X_target_t, y_target_t)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
-    test_loader_eval = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=False, drop_last=False
+    )
+    test_loader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=batch_size, shuffle=True, drop_last=False
+    )
+    test_loader_eval = torch.utils.data.DataLoader(
+        test_dataset, batch_size=batch_size, shuffle=False, drop_last=False
+    )
 
     val_loader = None
     if X_val is not None and y_val is not None:
         X_val_t = torch.tensor(X_val, dtype=torch.float32)
         y_val_t = torch.tensor(y_val, dtype=torch.long)
         val_dataset = torch.utils.data.TensorDataset(X_val_t, y_val_t)
-        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+        val_loader = torch.utils.data.DataLoader(
+            val_dataset, batch_size=batch_size, shuffle=False, drop_last=False
+        )
 
     G = model.feature_extractor
     F1 = model.classifier1
@@ -304,7 +342,9 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
     F2.apply(weights_init)
 
     optimizer_g = torch.optim.Adam(G.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer_f = torch.optim.Adam(list(F1.parameters()) + list(F2.parameters()), lr=lr, weight_decay=weight_decay)
+    optimizer_f = torch.optim.Adam(
+        list(F1.parameters()) + list(F2.parameters()), lr=lr, weight_decay=weight_decay
+    )
 
     start = 0
     criterion = nn.CrossEntropyLoss()
@@ -326,13 +366,16 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
         all_probs = np.concatenate(all_probs, axis=0)
         all_targets = np.concatenate(all_targets, axis=0)
         try:
-            val_auroc = roc_auc_score(all_targets, all_probs[:, 1]) if all_probs.shape[1] == 2 \
-                else roc_auc_score(all_targets, all_probs, multi_class='ovr')
+            val_auroc = (
+                roc_auc_score(all_targets, all_probs[:, 1])
+                if all_probs.shape[1] == 2
+                else roc_auc_score(all_targets, all_probs, multi_class="ovr")
+            )
         except Exception:
             val_auroc = 0.5
         return total_loss, val_auroc
 
-    best_val_score = -float('inf')
+    best_val_score = -float("inf")
     best_model_state = None
     patience_counter = 0
     mem_label = None
@@ -355,7 +398,9 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
             mem_label = torch.from_numpy(mem_label).to(device)
 
         for batch_idx in range(steps - 1):
-            G.train(); F1.train(); F2.train()
+            G.train()
+            F1.train()
+            F2.train()
 
             try:
                 data_s, label_s = next(iter_source)
@@ -374,27 +419,38 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
             bs = len(label_s)
 
             # Step A: train G, F1, F2 jointly
-            optimizer_g.zero_grad(); optimizer_f.zero_grad()
+            optimizer_g.zero_grad()
+            optimizer_f.zero_grad()
             output = G(data_all)
-            output1 = F1(output); output2 = F2(output)
+            output1 = F1(output)
+            output2 = F2(output)
             output_s1, output_s2 = output1[:bs], output2[:bs]
             output_t1, output_t2 = output1[bs:], output2[bs:]
             output_t1_s = F.softmax(output_t1, dim=1)
             output_t2_s = F.softmax(output_t2, dim=1)
 
             entropy_loss = Entropy(output_t1_s) + Entropy(output_t2_s)
-            supervision_loss = (Weighted_CrossEntropy(output_t1, pseudo_label_t) +
-                                Weighted_CrossEntropy(output_t2, pseudo_label_t)) if ep > start else 0
+            supervision_loss = (
+                (
+                    Weighted_CrossEntropy(output_t1, pseudo_label_t)
+                    + Weighted_CrossEntropy(output_t2, pseudo_label_t)
+                )
+                if ep > start
+                else 0
+            )
             loss1 = criterion(output_s1, label_s)
             loss2 = criterion(output_s2, label_s)
             all_loss = loss1 + loss2 + 0.01 * entropy_loss + 0.01 * supervision_loss
             all_loss.backward()
-            optimizer_g.step(); optimizer_f.step()
+            optimizer_g.step()
+            optimizer_f.step()
 
             # Step B: train F1, F2 to maximize discrepancy
-            optimizer_g.zero_grad(); optimizer_f.zero_grad()
+            optimizer_g.zero_grad()
+            optimizer_f.zero_grad()
             output = G(data_all)
-            output1 = F1(output); output2 = F2(output)
+            output1 = F1(output)
+            output2 = F2(output)
             output_s1, output_s2 = output1[:bs], output2[:bs]
             output_t1, output_t2 = output1[bs:], output2[bs:]
             output_t1_s = F.softmax(output_t1, dim=1)
@@ -410,9 +466,11 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
 
             # Step C: train G to minimize discrepancy (num_k steps)
             for _ in range(num_k):
-                optimizer_g.zero_grad(); optimizer_f.zero_grad()
+                optimizer_g.zero_grad()
+                optimizer_f.zero_grad()
                 output = G(data_all)
-                output1 = F1(output); output2 = F2(output)
+                output1 = F1(output)
+                output2 = F2(output)
                 output_s1, output_s2 = output1[:bs], output2[:bs]
                 output_t1, output_t2 = output1[bs:], output2[bs:]
                 output_t1_s = F.softmax(output_t1, dim=1)
@@ -420,9 +478,21 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
 
                 entropy_loss = Entropy(output_t1_s) + Entropy(output_t2_s)
                 loss_dis = discrepancy(output_t1, output_t2)
-                gmn_loss = gradient_discrepancy_loss_margin(
-                    output_s1, output_s2, label_s, output_t1, output_t2, pseudo_label_t,
-                    G, F1, F2) if ep > start else 0
+                gmn_loss = (
+                    gradient_discrepancy_loss_margin(
+                        output_s1,
+                        output_s2,
+                        label_s,
+                        output_t1,
+                        output_t2,
+                        pseudo_label_t,
+                        G,
+                        F1,
+                        F2,
+                    )
+                    if ep > start
+                    else 0
+                )
 
                 all_loss = 1.0 * loss_dis + 0.01 * entropy_loss + 0.01 * gmn_loss
                 all_loss.backward()
@@ -430,14 +500,18 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
 
         val_loss, val_auroc = _eval_val()
         if val_loss is not None:
-            epoch_iterator.set_postfix({'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'})
+            epoch_iterator.set_postfix(
+                {"Val Loss": f"{val_loss:.4f}", "Val AUC": f"{val_auroc:.4f}"}
+            )
             epoch_num = ep + 1
             epochs_ran = epoch_num
-            epoch_history.append({
-                'epoch': epoch_num,
-                'val_loss': round(float(val_loss), 6),
-                'val_auroc': round(float(val_auroc), 6),
-            })
+            epoch_history.append(
+                {
+                    "epoch": epoch_num,
+                    "val_loss": round(float(val_loss), 6),
+                    "val_auroc": round(float(val_auroc), 6),
+                }
+            )
             if val_auroc > best_val_score:
                 best_val_score = val_auroc
                 best_model_state = copy.deepcopy(model.state_dict())
@@ -471,5 +545,3 @@ def train_cgdm(model, X_source, y_source, X_target, y_target=None,
         extra={"num_k": num_k},
     )
     return model
-
-

@@ -21,32 +21,33 @@ class MASF(nn.Module):
     """
     MASF (Dou et al., 2019). PyTorch port of the official TensorFlow logic.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__()
         self.hparams = hparams if hparams else {}
         self.num_classes = num_classes
-        self.num_domains = self.hparams.get('num_domains')
+        self.num_domains = self.hparams.get("num_domains")
 
         self.featurizer = _build_featurizer(input_dim, self.hparams)
         self.classifier = _build_classifier(self.featurizer.output_dim, num_classes, self.hparams)
         self.network = FeatureClassifier(self.featurizer, self.classifier)
 
-        metric_dim = self.hparams.get('masf_metric_dim', 128)
+        metric_dim = self.hparams.get("masf_metric_dim", 128)
         self.metric_net = nn.Sequential(
             nn.Linear(self.featurizer.output_dim, metric_dim),
             nn.ReLU(),
-            nn.Linear(metric_dim, metric_dim)
+            nn.Linear(metric_dim, metric_dim),
         )
 
         self.optimizer = torch.optim.Adam(
             self.network.parameters(),
-            lr=self.hparams.get('lr', 1e-3),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            lr=self.hparams.get("lr", 1e-3),
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
         self.metric_optimizer = torch.optim.Adam(
             self.metric_net.parameters(),
-            lr=self.hparams.get('masf_metric_lr', self.hparams.get('lr', 1e-3)),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            lr=self.hparams.get("masf_metric_lr", self.hparams.get("lr", 1e-3)),
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
 
     def _kd_loss(self, logits1, y1, logits2, y2, bool_indicator, temperature=2.0):
@@ -57,8 +58,8 @@ class MASF(nn.Module):
         for cls in range(self.num_classes):
             if bool_indicator[cls] < 0.5:
                 continue
-            mask1 = (y1 == cls)
-            mask2 = (y2 == cls)
+            mask1 = y1 == cls
+            mask2 = y2 == cls
             if mask1.sum() == 0 or mask2.sum() == 0:
                 continue
             act1 = logits1[mask1].mean(0)
@@ -66,8 +67,8 @@ class MASF(nn.Module):
             prob1 = F.softmax(act1 / temperature, dim=0).clamp_min(1e-8)
             prob2 = F.softmax(act2 / temperature, dim=0).clamp_min(1e-8)
             kl_div = 0.5 * (
-                torch.sum(prob1 * torch.log(prob1 / (prob2 + eps))) +
-                torch.sum(prob2 * torch.log(prob2 / (prob1 + eps)))
+                torch.sum(prob1 * torch.log(prob1 / (prob2 + eps)))
+                + torch.sum(prob2 * torch.log(prob2 / (prob1 + eps)))
             )
             kd_loss = kd_loss + kl_div
         return kd_loss / self.num_classes
@@ -115,7 +116,7 @@ class MASF(nn.Module):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            return {'loss': loss.item()}
+            return {"loss": loss.item()}
 
         perm = torch.randperm(len(minibatches)).tolist()
         meta_train_idx = perm[:2]
@@ -137,8 +138,8 @@ class MASF(nn.Module):
         inner_net = copy.deepcopy(self.network)
         inner_opt = torch.optim.Adam(
             inner_net.parameters(),
-            lr=self.hparams.get('masf_inner_lr', self.hparams.get('lr', 1e-3)),
-            weight_decay=self.hparams.get('weight_decay', 0.0)
+            lr=self.hparams.get("masf_inner_lr", self.hparams.get("lr", 1e-3)),
+            weight_decay=self.hparams.get("weight_decay", 0.0),
         )
         inner_loss = 0.5 * (
             F.cross_entropy(inner_net(xa), ya) + F.cross_entropy(inner_net(xa1), ya1)
@@ -162,10 +163,10 @@ class MASF(nn.Module):
             if (cls in classes_b) and (cls in classes_a1):
                 bool_indicator_b_a1[cls] = 1.0
 
-        kd_temp = self.hparams.get('masf_temperature', 2.0)
+        kd_temp = self.hparams.get("masf_temperature", 2.0)
         global_loss = 0.5 * (
-            self._kd_loss(logits_b, yb, logits_a, ya, bool_indicator_b_a, temperature=kd_temp) +
-            self._kd_loss(logits_b, yb, logits_a1, ya1, bool_indicator_b_a1, temperature=kd_temp)
+            self._kd_loss(logits_b, yb, logits_a, ya, bool_indicator_b_a, temperature=kd_temp)
+            + self._kd_loss(logits_b, yb, logits_a1, ya1, bool_indicator_b_a1, temperature=kd_temp)
         )
 
         part = min(xa.size(0), xa1.size(0), xb.size(0))
@@ -174,12 +175,10 @@ class MASF(nn.Module):
 
         embeddings = self.metric_net(inner_net.forward_features(input_group))
         metric_loss = self._triplet_semihard_loss(
-            embeddings,
-            label_group,
-            margin=self.hparams.get('masf_margin', 1.0)
+            embeddings, label_group, margin=self.hparams.get("masf_margin", 1.0)
         )
 
-        meta_loss = global_loss + self.hparams.get('masf_metric_weight', 0.005) * metric_loss
+        meta_loss = global_loss + self.hparams.get("masf_metric_weight", 0.005) * metric_loss
 
         # Meta update using gradients from inner_net
         meta_grads = autograd.grad(meta_loss, inner_net.parameters(), allow_unused=True)
@@ -195,19 +194,17 @@ class MASF(nn.Module):
             group_feats = inner_net.forward_features(input_group)
         metric_embeddings = self.metric_net(group_feats.detach())
         metric_loss_metric = self._triplet_semihard_loss(
-            metric_embeddings,
-            label_group,
-            margin=self.hparams.get('masf_margin', 1.0)
+            metric_embeddings, label_group, margin=self.hparams.get("masf_margin", 1.0)
         )
         if metric_loss_metric.requires_grad:
             metric_loss_metric.backward()
             self.metric_optimizer.step()
 
         return {
-            'loss': (source_loss + meta_loss).item(),
-            'source_loss': source_loss.item(),
-            'global_loss': global_loss.item(),
-            'metric_loss': metric_loss.item()
+            "loss": (source_loss + meta_loss).item(),
+            "source_loss": source_loss.item(),
+            "global_loss": global_loss.item(),
+            "metric_loss": metric_loss.item(),
         }
 
     def predict(self, x):
@@ -215,4 +212,3 @@ class MASF(nn.Module):
 
 
 # --- Training Helper ---
-

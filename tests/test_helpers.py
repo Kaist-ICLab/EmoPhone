@@ -48,13 +48,13 @@ class _NoopIterator:
 
 
 def test_tracker_updates_best_state_when_score_improves():
-    tracker = EarlyStopTracker(patience=3, epochs=10, batch_size=8,
-                               lr=1e-3, weight_decay=0.0)
+    tracker = EarlyStopTracker(patience=3, epochs=10, batch_size=8, lr=1e-3, weight_decay=0.0)
     model = _Tiny()
     it = _NoopIterator()
 
-    stopped = tracker.record(model, epoch_num=1, train_loss=1.0,
-                             val_loss=1.2, val_auroc=0.61, iterator=it)
+    stopped = tracker.record(
+        model, epoch_num=1, train_loss=1.0, val_loss=1.2, val_auroc=0.61, iterator=it
+    )
     assert stopped is False
     assert tracker.best_val_score == pytest.approx(0.61)
     assert tracker.best_epoch == 1
@@ -63,17 +63,15 @@ def test_tracker_updates_best_state_when_score_improves():
 
 def test_tracker_fires_after_consecutive_non_improvements():
     """Patience=2 -> two consecutive epochs without improvement triggers stop."""
-    tracker = EarlyStopTracker(patience=2, epochs=10, batch_size=8,
-                               lr=1e-3, weight_decay=0.0)
+    tracker = EarlyStopTracker(patience=2, epochs=10, batch_size=8, lr=1e-3, weight_decay=0.0)
     model = _Tiny()
     it = _NoopIterator()
 
-    tracker.record(model, epoch_num=1, train_loss=1.0, val_loss=1.2,
-                   val_auroc=0.70, iterator=it)
-    tracker.record(model, epoch_num=2, train_loss=0.9, val_loss=1.1,
-                   val_auroc=0.65, iterator=it)
-    stopped = tracker.record(model, epoch_num=3, train_loss=0.8, val_loss=1.0,
-                             val_auroc=0.60, iterator=it)
+    tracker.record(model, epoch_num=1, train_loss=1.0, val_loss=1.2, val_auroc=0.70, iterator=it)
+    tracker.record(model, epoch_num=2, train_loss=0.9, val_loss=1.1, val_auroc=0.65, iterator=it)
+    stopped = tracker.record(
+        model, epoch_num=3, train_loss=0.8, val_loss=1.0, val_auroc=0.60, iterator=it
+    )
 
     assert stopped is True
     assert tracker.early_stopped is True
@@ -86,13 +84,11 @@ def test_tracker_fires_after_consecutive_non_improvements():
 
 
 def test_tracker_finalize_restores_best_state_and_writes_metadata():
-    tracker = EarlyStopTracker(patience=2, epochs=10, batch_size=8,
-                               lr=1e-3, weight_decay=0.0)
+    tracker = EarlyStopTracker(patience=2, epochs=10, batch_size=8, lr=1e-3, weight_decay=0.0)
     model = _Tiny()
     it = _NoopIterator()
 
-    tracker.record(model, epoch_num=1, train_loss=1.0, val_loss=1.0,
-                   val_auroc=0.70, iterator=it)
+    tracker.record(model, epoch_num=1, train_loss=1.0, val_loss=1.0, val_auroc=0.70, iterator=it)
     # Manually corrupt the live weights to simulate a worse later epoch.
     with torch.no_grad():
         model.fc.weight.zero_()
@@ -114,7 +110,12 @@ def test_build_loaders_and_evaluate_val_round_trip():
     y = (np.random.RandomState(1).rand(32) > 0.5).astype(np.int64)
 
     train_loader, val_loader, target_loader = _build_loaders(
-        X[:16], y[:16], X[16:24], y[16:24], X[24:], batch_size=8,
+        X[:16],
+        y[:16],
+        X[16:24],
+        y[16:24],
+        X[24:],
+        batch_size=8,
     )
     assert target_loader is not None
 
