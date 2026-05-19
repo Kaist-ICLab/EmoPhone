@@ -12,6 +12,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 try:
     import torch
@@ -201,8 +208,6 @@ def _predict_probs(model, X: np.ndarray, batch_size: Optional[int] = None) -> np
 
 
 def evaluate_extended(model, X: np.ndarray, y: np.ndarray, batch_size: Optional[int] = None) -> Dict[str, float]:
-    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
-
     probs = _predict_probs(model, X, batch_size=batch_size)
     preds = np.argmax(probs, axis=1)
     try:

@@ -1,26 +1,41 @@
+import copy
+import inspect
+
+import einops
+import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import inspect
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
-import lightgbm as lgb
+import pytorch_widedeep.models.tabular.transformers.ft_transformer as _ft_mod
+import pytorch_widedeep.models.tabular.transformers.saint as _saint_mod
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import copy
-from typing import Dict, Any, Optional
-from tqdm import tqdm
+import xgboost as xgb
+from deepctr_torch.inputs import DenseFeat, SparseFeat
+from deepctr_torch.models import AutoInt as DeepCTRAutoInt
+from deepctr_torch.models import DCN as DeepCTRDCN
+from pytorch_tabnet.tab_model import TabNetClassifier
+from pytorch_widedeep.callbacks import EarlyStopping as WideEarlyStopping
+from pytorch_widedeep.metrics import Accuracy as WideAccuracy
+from pytorch_widedeep.models import SAINT, TabTransformer, WideDeep
+from pytorch_widedeep.models import FTTransformer as WideFTTransformer
+from pytorch_widedeep.models.tabular.transformers._attention_layers import (
+    AddNorm,
+    FeedForward,
+    MultiHeadedAttention,
+    NormAdd,
+)
+from pytorch_widedeep.preprocessing import TabPreprocessor
+from pytorch_widedeep.training import Trainer as WideTrainer
+from pytorch_widedeep.training._wd_dataset import WideDeepDataset
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from tensorflow.python.keras.callbacks import Callback
+from torch.utils.data import DataLoader, TensorDataset
+from torchmetrics.classification import BinaryAUROC
+from tqdm import tqdm
 
 FIXED_BATCH_SIZE = 16
-
-# Imports for new libraries: Moved to inside wrappers for lazy loading and memory safety
-# import pandas as pd # Already imported at top
-# from pytorch_widedeep... 
-# from pytorch_tabular...
-# from deepctr_torch...
 
 
 def attach_training_metadata(model, **updates):
@@ -70,7 +85,6 @@ def _filter_supported_kwargs(callable_obj, kwargs):
 
 class XGBoostWrapper(BaseEstimator, ClassifierMixin):
     def __init__(self, n_jobs=-1, patience=20, **kwargs):
-        import xgboost as xgb
         self.patience = patience
         # Force CPU by default to avoid CUDA errors in some environments.
         # Users can still override by passing tree_method explicitly.
@@ -144,7 +158,6 @@ class TabNetWrapper(BaseEstimator, ClassifierMixin):
         self.model = None
 
     def fit(self, X, y, X_val=None, y_val=None):
-        from pytorch_tabnet.tab_model import TabNetClassifier
         params = _drop_optuna_helper_params(self.kwargs)
         eval_set = [(X_val, y_val)] if X_val is not None else None
         self.batch_size = int(self.batch_size or FIXED_BATCH_SIZE)
@@ -206,12 +219,6 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
         self.col_names = None
 
     def fit(self, X, y, X_val=None, y_val=None):
-        from pytorch_widedeep.preprocessing import TabPreprocessor
-        from pytorch_widedeep.models import TabMlp, TabTransformer, SAINT, WideDeep
-        from pytorch_widedeep.training import Trainer as WideTrainer
-        from pytorch_widedeep.metrics import Accuracy as WideAccuracy
-        from pytorch_widedeep.callbacks import EarlyStopping as WideEarlyStopping
-        from torchmetrics.classification import BinaryAUROC
         training_params = _drop_optuna_helper_params(self.kwargs)
         train_lr = float(training_params.get("lr", 1e-3))
         train_weight_decay = float(training_params.get("weight_decay", 0.0) or 0.0)
@@ -285,11 +292,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             _cap_transformer_params(saint_params, 'SAINT')
             if self.efficient_attention:
                 print("[INFO] SAINT: enabling linear-attention path for SAINT encoder blocks.")
-                import einops
-                import pytorch_widedeep.models.tabular.transformers.saint as saint_mod
-                from pytorch_widedeep.models.tabular.transformers._attention_layers import AddNorm, FeedForward, MultiHeadedAttention
-
-                if not getattr(saint_mod, "_ubicomp_linear_saint_patch", False):
+                if not getattr(_saint_mod, "_ubicomp_linear_saint_patch", False):
                     class EfficientSaintEncoder(nn.Module):
                         def __init__(
                             self,
@@ -342,8 +345,8 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
                             x = einops.rearrange(x, "n b d -> b n d")
                             return x
 
-                    saint_mod.SaintEncoder = EfficientSaintEncoder
-                    saint_mod._ubicomp_linear_saint_patch = True
+                    _saint_mod.SaintEncoder = EfficientSaintEncoder
+                    _saint_mod._ubicomp_linear_saint_patch = True
 
             saint_params = _filter_supported_kwargs(SAINT.__init__, saint_params)
             effective_model_params = dict(saint_params)
@@ -380,7 +383,6 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             )
 
         elif self.model_type == 'FTTransformer':
-            from pytorch_widedeep.models import FTTransformer
             ft_params = training_params.copy()
             _TRAIN_KEYS = {'lr', 'weight_decay', 'batch_size', 'mlp_dropout', 'num_layers', 'hidden_dim'}
             for k in _TRAIN_KEYS:
@@ -437,10 +439,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
                 self.batch_size = adjusted_batch
             if self.efficient_attention:
                 print("[INFO] FTTransformer: enabling kernel linear-attention path in FT encoder blocks.")
-                import pytorch_widedeep.models.tabular.transformers.ft_transformer as ft_mod
-                from pytorch_widedeep.models.tabular.transformers._attention_layers import NormAdd, FeedForward, MultiHeadedAttention
-
-                if not getattr(ft_mod, "_ubicomp_linear_ft_patch", False):
+                if not getattr(_ft_mod, "_ubicomp_linear_ft_patch", False):
                     class EfficientFTTransformerEncoder(nn.Module):
                         def __init__(
                             self,
@@ -478,12 +477,12 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
                                 x = self.attn_normadd(X, self.attn)
                             return self.ff_normadd(x, self.ff)
 
-                    ft_mod.FTTransformerEncoder = EfficientFTTransformerEncoder
-                    ft_mod._ubicomp_linear_ft_patch = True
+                    _ft_mod.FTTransformerEncoder = EfficientFTTransformerEncoder
+                    _ft_mod._ubicomp_linear_ft_patch = True
 
-            ft_params = _filter_supported_kwargs(FTTransformer.__init__, ft_params)
+            ft_params = _filter_supported_kwargs(WideFTTransformer.__init__, ft_params)
             effective_model_params = dict(ft_params)
-            deeptabular = FTTransformer(
+            deeptabular = WideFTTransformer(
                 column_idx=self.preprocessor.column_idx,
                 continuous_cols=self.col_names,
                 embed_continuous_method='standard',
@@ -498,8 +497,6 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
         # Callbacks
         callbacks = []
         # Use ROCAUC for early stopping if possible, or Accuracy
-        from pytorch_widedeep.metrics import Accuracy
-        
         if self.patience > 0:
             # Torchmetrics names are logged as val_<ClassName>, e.g. val_BinaryAUROC.
             callbacks.append(
@@ -517,7 +514,7 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
             model,
             objective='binary',
             optimizers=torch.optim.Adam(model.parameters(), lr=train_lr, weight_decay=train_weight_decay),
-            metrics=[Accuracy, BinaryAUROC()],
+            metrics=[WideAccuracy, BinaryAUROC()],
             callbacks=callbacks,
             device=device,
             verbose=0,
@@ -528,8 +525,6 @@ class WidedeepWrapper(BaseEstimator, ClassifierMixin):
         
         # Defensive Patch: WideDeepDataset sometimes receives X_tab as a dict {'X_tab': array} despite correct usage.
         # This patch unwraps it automatically.
-        from pytorch_widedeep.training._wd_dataset import WideDeepDataset
-        
         _original_wd_init = WideDeepDataset.__init__
         
         def _patched_wd_init(self, X_wide=None, X_tab=None, X_text=None, X_img=None, target=None, transforms=None):
@@ -648,7 +643,6 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
         self._autoint_bin_edges = None
 
     def _fit_autoint_input(self, X, feature_names, n_bins):
-        from deepctr_torch.inputs import SparseFeat
         bin_edges = []
         encoded_columns = []
         feature_columns = []
@@ -685,7 +679,6 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
         return [X_array]
 
     def fit(self, X, y, X_val=None, y_val=None):
-        from deepctr_torch.inputs import DenseFeat
         params = _drop_optuna_helper_params(self.kwargs)
         lr = float(params.pop("lr", 1e-3))
         weight_decay = float(params.pop("weight_decay", 0.0) or 0.0)
@@ -698,7 +691,6 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         if self.model_type == 'DCN':
-            from deepctr_torch.models import DCN
             dcn_params = params.copy()
             if 'n_cross_layers' in dcn_params and 'cross_num' not in dcn_params:
                 dcn_params['cross_num'] = dcn_params.pop('n_cross_layers')
@@ -731,9 +723,9 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
             # Keep the same raw dense input, but represent it as one wide DenseFeat to reduce
             # DeepCTR feature-index bookkeeping overhead for 9k+ column tables.
             self.feature_columns = [DenseFeat('dense_input', X.shape[1])]
-            dcn_params = _filter_supported_kwargs(DCN.__init__, dcn_params)
+            dcn_params = _filter_supported_kwargs(DeepCTRDCN.__init__, dcn_params)
             effective_model_params = dict(dcn_params)
-            self.model = DCN(
+            self.model = DeepCTRDCN(
                 self.feature_columns,
                 self.feature_columns,
                 task='binary',
@@ -741,7 +733,6 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
                 **dcn_params,
             )
         elif self.model_type == 'AutoInt':
-            from deepctr_torch.models import AutoInt
             autoint_params = params.copy()
             n_bins = int(autoint_params.pop('autoint_bins', 16))
             if n_bins > 16:
@@ -759,9 +750,9 @@ class DeepCTRWrapper(BaseEstimator, ClassifierMixin):
             autoint_params.setdefault('l2_reg_embedding', weight_decay)
             autoint_params.pop('att_embedding_dim', None)
             self.feature_columns, train_model_input = self._fit_autoint_input(X, feature_names, n_bins=n_bins)
-            autoint_params = _filter_supported_kwargs(AutoInt.__init__, autoint_params)
+            autoint_params = _filter_supported_kwargs(DeepCTRAutoInt.__init__, autoint_params)
             effective_model_params = dict(autoint_params)
-            self.model = AutoInt(
+            self.model = DeepCTRAutoInt(
                 self.feature_columns,
                 self.feature_columns,
                 task='binary',
