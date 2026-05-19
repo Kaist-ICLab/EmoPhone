@@ -6,20 +6,21 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from scipy.spatial.distance import cdist
+from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+
+from models import train_torch_model
 
 from .._da_helpers import (
     DAModel,
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
+    _finalize_training_metadata,
     _infinite_iterator,
 )
-from scipy.spatial.distance import cdist
-from sklearn.metrics import roc_auc_score
-from models import train_torch_model
 from ..da_tllib_losses import entropy as tllib_entropy
-from .._da_helpers import _finalize_training_metadata
 
 
 class SHOT(DAModel):
@@ -27,29 +28,33 @@ class SHOT(DAModel):
     SHOT: Source Hypothesis Transfer (Liang et al., 2020)
     Source-free Domain Adaptation.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super(SHOT, self).__init__(input_dim, num_classes, hparams)
-    
+
     def forward(self, x):
         return self.predict(x)
 
+
 def _shot_op_copy(optimizer):
     for param_group in optimizer.param_groups:
-        param_group['lr0'] = param_group['lr']
+        param_group["lr0"] = param_group["lr"]
     return optimizer
 
 
 def _shot_lr_scheduler(optimizer, iter_num, max_iter, gamma=10, power=0.75):
     decay = (1 + gamma * iter_num / max_iter) ** (-power)
     for param_group in optimizer.param_groups:
-        param_group['lr'] = param_group['lr0'] * decay
-        param_group['weight_decay'] = 1e-3
-        param_group['momentum'] = 0.9
-        param_group['nesterov'] = True
+        param_group["lr"] = param_group["lr0"] * decay
+        param_group["weight_decay"] = 1e-3
+        param_group["momentum"] = 0.9
+        param_group["nesterov"] = True
     return optimizer
 
 
-def _shot_obtain_label(loader, model, num_classes, distance='cosine', threshold=0, epsilon=1e-5, device='cuda'):
+def _shot_obtain_label(
+    loader, model, num_classes, distance="cosine", threshold=0, epsilon=1e-5, device="cuda"
+):
     start = True
     with torch.no_grad():
         for X_batch, idx in loader:
@@ -69,7 +74,7 @@ def _shot_obtain_label(loader, model, num_classes, distance='cosine', threshold=
     _unknown_weight = 1 - ent / np.log(num_classes)
     _, predict = torch.max(all_output, 1)
 
-    if distance == 'cosine':
+    if distance == "cosine":
         all_fea = torch.cat((all_fea, torch.ones(all_fea.size(0), 1)), 1)
         all_fea = (all_fea.t() / torch.norm(all_fea, p=2, dim=1)).t()
 
@@ -86,12 +91,24 @@ def _shot_obtain_label(loader, model, num_classes, distance='cosine', threshold=
         predict = labelset[pred_label]
         aff = np.eye(num_classes)[predict]
 
-    return predict.astype('int')
+    return predict.astype("int")
 
 
-def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
-               epochs=50, batch_size=64, lr=1e-3, patience=5,
-               device='cuda' if torch.cuda.is_available() else 'cpu', X_target=None):
+def train_shot(
+    model,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
+    epochs=50,
+    batch_size=64,
+    lr=1e-3,
+    patience=5,
+    device="cuda" if torch.cuda.is_available() else "cpu",
+    X_target=None,
+):
     """
     SHOT (official-style):
       1) Train source model on labeled source.
@@ -105,8 +122,16 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     # Phase 1: Source pretraining
     model = train_torch_model(
-        model, X_train, y_train, X_val, y_val,
-        epochs=epochs, batch_size=batch_size, lr=lr, patience=patience, device=device
+        model,
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        epochs=epochs,
+        batch_size=batch_size,
+        lr=lr,
+        patience=patience,
+        device=device,
     )
     source_pretrain_info = dict(getattr(model, "_training_info", {}))
 
@@ -115,29 +140,31 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
         p.requires_grad = False
 
     # Hyperparams (from official defaults)
-    cls_par = model.hparams.get('shot_cls_par', 0.3)
-    ent_par = model.hparams.get('shot_ent_par', 1.0)
-    gent = model.hparams.get('shot_gent', True)
-    ent = model.hparams.get('shot_ent', True)
-    threshold = model.hparams.get('shot_threshold', 0)
-    distance = model.hparams.get('shot_distance', 'cosine')
-    epsilon = model.hparams.get('shot_epsilon', 1e-5)
-    adapt_epochs = model.hparams.get('shot_epochs', max(1, epochs // 2))
-    interval = model.hparams.get('shot_interval', 15)
-    lr_decay = model.hparams.get('shot_lr_decay', 0.1)
+    cls_par = model.hparams.get("shot_cls_par", 0.3)
+    ent_par = model.hparams.get("shot_ent_par", 1.0)
+    gent = model.hparams.get("shot_gent", True)
+    ent = model.hparams.get("shot_ent", True)
+    threshold = model.hparams.get("shot_threshold", 0)
+    distance = model.hparams.get("shot_distance", "cosine")
+    epsilon = model.hparams.get("shot_epsilon", 1e-5)
+    adapt_epochs = model.hparams.get("shot_epochs", max(1, epochs // 2))
+    interval = model.hparams.get("shot_interval", 15)
+    lr_decay = model.hparams.get("shot_lr_decay", 0.1)
 
     # Target loaders with indices
     target_dataset = torch.utils.data.TensorDataset(
-        torch.tensor(X_target, dtype=torch.float32),
-        torch.arange(len(X_target), dtype=torch.long)
+        torch.tensor(X_target, dtype=torch.float32), torch.arange(len(X_target), dtype=torch.long)
     )
-    target_loader = torch.utils.data.DataLoader(target_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
-    target_loader_eval = torch.utils.data.DataLoader(target_dataset, batch_size=batch_size * 3, shuffle=False, drop_last=False)
+    target_loader = torch.utils.data.DataLoader(
+        target_dataset, batch_size=batch_size, shuffle=True, drop_last=False
+    )
+    target_loader_eval = torch.utils.data.DataLoader(
+        target_dataset, batch_size=batch_size * 3, shuffle=False, drop_last=False
+    )
 
     # Validation loader (source)
     val_dataset = torch.utils.data.TensorDataset(
-        torch.tensor(X_val, dtype=torch.float32),
-        torch.tensor(y_val, dtype=torch.long)
+        torch.tensor(X_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.long)
     )
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
@@ -149,7 +176,7 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
     interval_iter = max(1, max_iter // interval) if interval > 0 else max_iter
     iter_num = 0
 
-    best_val_score = -float('inf')
+    best_val_score = -float("inf")
     best_model_state = None
     patience_counter = 0
     best_epoch = None
@@ -181,8 +208,13 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
             if iter_num % interval_iter == 0 and cls_par > 0:
                 model.eval()
                 mem_label = _shot_obtain_label(
-                    target_loader_eval, model, model.classifier[-1].out_features,
-                    distance=distance, threshold=threshold, epsilon=epsilon, device=device
+                    target_loader_eval,
+                    model,
+                    model.classifier[-1].out_features,
+                    distance=distance,
+                    threshold=threshold,
+                    epsilon=epsilon,
+                    device=device,
                 )
                 mem_label = torch.from_numpy(mem_label).to(device)
                 model.train()
@@ -229,18 +261,27 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                epoch_iterator.write(f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})")
+                epoch_iterator.write(
+                    f"Early stopping at epoch {epoch} (Best AUROC: {best_val_score:.4f})"
+                )
                 early_stopped = True
                 early_stop_epoch = epoch_num
                 break
 
-        postfix = {'Loss': f'{train_loss:.4f}', 'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'}
+        postfix = {
+            "Loss": f"{train_loss:.4f}",
+            "Val Loss": f"{val_loss:.4f}",
+            "Val AUC": f"{val_auroc:.4f}",
+        }
         epoch_iterator.set_postfix(postfix)
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(train_loss), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),})
+        epoch_history.append(
+            {
+                "epoch": epoch_num,
+                "train_loss": round(float(train_loss), 6),
+                "val_loss": round(float(val_loss), 6),
+                "val_auroc": round(float(val_auroc), 6),
+            }
+        )
 
     if best_model_state:
         model.load_state_dict(best_model_state)
@@ -268,5 +309,6 @@ def train_shot(model, X_train, y_train, d_train, X_val, y_val, d_val,
         },
     )
     return model
+
 
 # CBST (Class-Balanced Self-Training)

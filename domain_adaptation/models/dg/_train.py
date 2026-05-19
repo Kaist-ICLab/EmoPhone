@@ -1,4 +1,5 @@
 """Shared training loop for every DG algorithm in this subpackage."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,16 +19,16 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
-from ._base import DGModel
-
 from models import attach_training_metadata
+
+from ._base import DGModel
 
 
 def split_meta_train_test(minibatches, num_meta_test=1):
     n_domains = len(minibatches)
     perm = torch.randperm(n_domains).tolist()
     pairs = []
-    meta_train = perm[:(n_domains - num_meta_test)]
+    meta_train = perm[: (n_domains - num_meta_test)]
     meta_test = perm[-num_meta_test:]
 
     for i, j in zip(meta_train, cycle(meta_test)):
@@ -57,31 +58,41 @@ def random_pairs_of_minibatches(minibatches):
     return pairs
 
 
-
-
-def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
-                   epochs=20, batch_size=32, domains_per_batch=8, patience=20, device='cuda'):
+def train_dg_model(
+    model,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
+    epochs=20,
+    batch_size=32,
+    domains_per_batch=8,
+    patience=20,
+    device="cuda",
+):
     """
     Training loop for Domain Generalization models.
     """
-    device = torch.device(device if torch.cuda.is_available() else 'cpu')
+    device = torch.device(device if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.train()
 
     unique_domains = np.unique(d_train)
     num_domains = len(unique_domains)
 
-    if hasattr(model, 'num_domains'):
+    if hasattr(model, "num_domains"):
         model.num_domains = num_domains
-    if hasattr(model, 'hparams'):
-        model.hparams['num_domains'] = num_domains
+    if hasattr(model, "hparams"):
+        model.hparams["num_domains"] = num_domains
 
     logger.info(f"DG Training: {num_domains} domains, sampling {domains_per_batch} per batch.")
 
     domain_loaders = []
     domain_datasets = []
     for domain in unique_domains:
-        mask = (d_train == domain)
+        mask = d_train == domain
         X_d = torch.tensor(X_train[mask], dtype=torch.float32)
         y_d = torch.tensor(y_train[mask], dtype=torch.long)
         dataset = TensorDataset(X_d, y_d)
@@ -94,7 +105,7 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     steps_per_epoch = max(10, int(len(X_train) / (batch_size * domains_per_batch)))
 
-    best_val_loss = float('inf')
+    best_val_loss = float("inf")
     best_model_state = None
     patience_counter = 0
     best_epoch = None
@@ -111,9 +122,7 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
         for _ in range(steps_per_epoch):
             start_domain_idx = np.random.choice(
-                num_domains,
-                domains_per_batch,
-                replace=(num_domains < domains_per_batch)
+                num_domains, domains_per_batch, replace=(num_domains < domains_per_batch)
             )
 
             minibatches = []
@@ -123,7 +132,12 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
                     batch = next(loader)
                 except StopIteration:
                     domain_loaders[d_idx] = iter(
-                        DataLoader(domain_datasets[d_idx], batch_size=batch_size, shuffle=True, drop_last=False)
+                        DataLoader(
+                            domain_datasets[d_idx],
+                            batch_size=batch_size,
+                            shuffle=True,
+                            drop_last=False,
+                        )
                     )
                     batch = next(domain_loaders[d_idx])
 
@@ -131,7 +145,7 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
                 minibatches.append((x.to(device), y.to(device)))
 
             metrics = model.update(minibatches, domain_indices=list(start_domain_idx))
-            epoch_loss += metrics.get('loss', 0.0)
+            epoch_loss += metrics.get("loss", 0.0)
 
         model.eval()
         with torch.no_grad():
@@ -140,19 +154,23 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
             preds = logits.argmax(dim=1)
             val_acc = (preds == y_val_t).float().mean().item()
 
-        epoch_iterator.set_postfix({
-            'Loss': f'{epoch_loss/steps_per_epoch:.4f}',
-            'Val Loss': f'{val_loss:.4f}',
-            'Val Acc': f'{val_acc:.4f}'
-        })
+        epoch_iterator.set_postfix(
+            {
+                "Loss": f"{epoch_loss/steps_per_epoch:.4f}",
+                "Val Loss": f"{val_loss:.4f}",
+                "Val Acc": f"{val_acc:.4f}",
+            }
+        )
         epoch_num = epoch + 1
         epochs_ran = epoch_num
-        epoch_history.append({
-            'epoch': epoch_num,
-            'train_loss': round(float(epoch_loss / steps_per_epoch), 6),
-            'val_loss': round(float(val_loss), 6),
-            'val_accuracy': round(float(val_acc), 6),
-        })
+        epoch_history.append(
+            {
+                "epoch": epoch_num,
+                "train_loss": round(float(epoch_loss / steps_per_epoch), 6),
+                "val_loss": round(float(val_loss), 6),
+                "val_accuracy": round(float(val_acc), 6),
+            }
+        )
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -172,8 +190,11 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
 
     attach_training_metadata(
         model,
-        optimizer=getattr(getattr(model, 'optimizer', None), '__class__', type('obj', (), {})).__name__
-        if getattr(model, 'optimizer', None) is not None else 'domainbed_optimizer',
+        optimizer=(
+            getattr(getattr(model, "optimizer", None), "__class__", type("obj", (), {})).__name__
+            if getattr(model, "optimizer", None) is not None
+            else "domainbed_optimizer"
+        ),
         best_epoch=best_epoch,
         early_stopped=early_stopped,
         early_stop_epoch=early_stop_epoch,
@@ -181,7 +202,7 @@ def train_dg_model(model, X_train, y_train, d_train, X_val, y_val, d_val,
         max_epochs=epochs,
         batch_size=batch_size,
         patience=patience,
-        model_selection_metric='val_loss',
+        model_selection_metric="val_loss",
         best_metric_value=round(float(best_val_loss), 6) if best_epoch is not None else None,
         epoch_history=epoch_history,
         domains_per_batch=domains_per_batch,

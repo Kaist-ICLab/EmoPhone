@@ -22,14 +22,15 @@ class VREx(ERM):
     """
     V-REx (Krueger et al., 2021)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__(input_dim, num_classes, hparams)
-        self.register_buffer('update_count', torch.tensor([0]))
+        self.register_buffer("update_count", torch.tensor([0]))
 
     def update(self, minibatches, unlabeled=None, **kwargs):
         penalty_weight = (
-            self.hparams.get('vrex_lambda', 1.0)
-            if self.update_count >= self.hparams.get('vrex_penalty_anneal_iters', 0)
+            self.hparams.get("vrex_lambda", 1.0)
+            if self.update_count >= self.hparams.get("vrex_penalty_anneal_iters", 0)
             else 1.0
         )
 
@@ -39,7 +40,7 @@ class VREx(ERM):
         losses = torch.zeros(len(minibatches), device=all_x.device)
 
         for i, (x, y) in enumerate(minibatches):
-            logits = all_logits[all_logits_idx:all_logits_idx + x.shape[0]]
+            logits = all_logits[all_logits_idx : all_logits_idx + x.shape[0]]
             all_logits_idx += x.shape[0]
             losses[i] = F.cross_entropy(logits, y)
 
@@ -47,11 +48,11 @@ class VREx(ERM):
         penalty = ((losses - mean) ** 2).mean()
         loss = mean + penalty_weight * penalty
 
-        if self.update_count == self.hparams.get('vrex_penalty_anneal_iters', 0):
+        if self.update_count == self.hparams.get("vrex_penalty_anneal_iters", 0):
             self.optimizer = torch.optim.Adam(
                 self.network.parameters(),
-                lr=self.hparams.get('lr', 1e-3),
-                weight_decay=self.hparams.get('weight_decay', 0.0)
+                lr=self.hparams.get("lr", 1e-3),
+                weight_decay=self.hparams.get("weight_decay", 0.0),
             )
 
         self.optimizer.zero_grad()
@@ -59,6 +60,4 @@ class VREx(ERM):
         self.optimizer.step()
 
         self.update_count += 1
-        return {'loss': loss.item(), 'nll': mean.item(), 'penalty': penalty.item()}
-
-
+        return {"loss": loss.item(), "nll": mean.item(), "penalty": penalty.item()}

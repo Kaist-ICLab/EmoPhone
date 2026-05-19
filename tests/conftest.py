@@ -5,6 +5,7 @@ so that the module-level ``from models import ...`` and
 ``from domain_adaptation.models.da_models import ...`` imports used by
 the benchmark codebase resolve under pytest without any additional setup.
 """
+
 import sys
 from pathlib import Path
 

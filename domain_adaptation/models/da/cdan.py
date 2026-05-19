@@ -9,12 +9,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from .._da_helpers import (
-    DAModel,
     DEFAULT_BATCH_SIZE,
     DEFAULT_DEVICE,
     DEFAULT_EPOCHS,
     DEFAULT_LR,
     DEFAULT_PATIENCE,
+    DAModel,
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
@@ -31,16 +31,20 @@ class CDAN(DAModel):
     """
     CDAN backbone. Conditional adversarial loss handled in training.
     """
+
     def __init__(self, input_dim, num_classes=2, num_domains=None, hparams=None):
         super(CDAN, self).__init__(input_dim, num_classes, hparams)
         self.num_domains = num_domains
 
 
-
 def train_cdan(
     model,
-    X_train, y_train, d_train,
-    X_val, y_val, d_val,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
     lr: float = DEFAULT_LR,
@@ -56,21 +60,25 @@ def train_cdan(
         raise ValueError("CDAN requires X_target for UDA. Use --uda to provide target samples.")
 
     model = model.to(device)
-    weight_decay = model.hparams.get('weight_decay', 0.0)
-    disc_hidden = model.hparams.get('disc_hidden', 1024)
-    disc_lr = model.hparams.get('discriminator_lr', lr)
-    trade_off = model.hparams.get('trade_off', 1.0)
-    randomized = model.hparams.get('cdan_randomized', False)
-    entropy_conditioning = model.hparams.get('cdan_entropy', True)
-    randomized_dim = model.hparams.get('cdan_randomized_dim', 1024)
+    weight_decay = model.hparams.get("weight_decay", 0.0)
+    disc_hidden = model.hparams.get("disc_hidden", 1024)
+    disc_lr = model.hparams.get("discriminator_lr", lr)
+    trade_off = model.hparams.get("trade_off", 1.0)
+    randomized = model.hparams.get("cdan_randomized", False)
+    entropy_conditioning = model.hparams.get("cdan_entropy", True)
+    randomized_dim = model.hparams.get("cdan_randomized_dim", 1024)
 
-    train_loader, val_loader, target_loader = _build_loaders(X_train, y_train, X_val, y_val, X_target, batch_size)
+    train_loader, val_loader, target_loader = _build_loaders(
+        X_train, y_train, X_val, y_val, X_target, batch_size
+    )
     target_iter = _infinite_iterator(target_loader)
 
     feature_dim = model.feature_extractor.output_dim
     num_classes = model.classifier[-1].out_features
     disc_in_dim = randomized_dim if randomized else feature_dim * num_classes
-    domain_discriminator = DomainDiscriminator(disc_in_dim, disc_hidden, batch_norm=True, sigmoid=True).to(device)
+    domain_discriminator = DomainDiscriminator(
+        disc_in_dim, disc_hidden, batch_norm=True, sigmoid=True
+    ).to(device)
     cdan_loss = ConditionalDomainAdversarialLoss(
         domain_discriminator,
         entropy_conditioning=entropy_conditioning,
@@ -94,8 +102,11 @@ def train_cdan(
     class_criterion = nn.CrossEntropyLoss()
 
     tracker = EarlyStopTracker(
-        patience=patience, epochs=epochs, batch_size=batch_size,
-        lr=lr, weight_decay=weight_decay,
+        patience=patience,
+        epochs=epochs,
+        batch_size=batch_size,
+        lr=lr,
+        weight_decay=weight_decay,
     )
 
     epoch_iterator = tqdm(range(epochs), desc="CDAN Training")
@@ -106,7 +117,7 @@ def train_cdan(
 
         for X_s, y_s in train_loader:
             X_s, y_s = X_s.to(device), y_s.to(device)
-            X_t, = next(target_iter)
+            (X_t,) = next(target_iter)
             X_t = X_t.to(device)
 
             optimizer.zero_grad()
@@ -127,12 +138,14 @@ def train_cdan(
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
 
-        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
-                          val_loss=val_loss, val_auroc=val_auroc,
-                          iterator=epoch_iterator):
+        if tracker.record(
+            model,
+            epoch_num=epoch + 1,
+            train_loss=train_loss,
+            val_loss=val_loss,
+            val_auroc=val_auroc,
+            iterator=epoch_iterator,
+        ):
             break
 
-    return tracker.finalize(model, optimizer=optimizer,
-                            extra_meta={"discriminator_lr": disc_lr})
-
-
+    return tracker.finalize(model, optimizer=optimizer, extra_meta={"discriminator_lr": disc_lr})

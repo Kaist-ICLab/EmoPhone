@@ -23,12 +23,14 @@ from sklearn.metrics import (
 try:
     import torch
     import torch.nn as nn
+
     _TORCH = True
 except ImportError:
     _TORCH = False
 
 try:
     import psutil
+
     _PSUTIL = True
 except ImportError:
     _PSUTIL = False
@@ -64,7 +66,7 @@ def _hardware_info() -> Dict[str, Any]:
         "cpu_model": _cpu_model(),
         "cpu_count_logical": os.cpu_count(),
         "cpu_count_physical": psutil.cpu_count(logical=False) if _PSUTIL else None,
-        "ram_gb": round(psutil.virtual_memory().total / 1024 ** 3, 2) if _PSUTIL else None,
+        "ram_gb": round(psutil.virtual_memory().total / 1024**3, 2) if _PSUTIL else None,
         "platform": platform.platform(),
         "hostname": platform.node(),
     }
@@ -72,30 +74,32 @@ def _hardware_info() -> Dict[str, Any]:
         gpu_count = torch.cuda.device_count()
         gpu_models = [torch.cuda.get_device_name(i) for i in range(gpu_count)]
         vram_per_device = [
-            round(torch.cuda.get_device_properties(i).total_memory / 1024 ** 3, 2)
+            round(torch.cuda.get_device_properties(i).total_memory / 1024**3, 2)
             for i in range(gpu_count)
         ]
-        info.update({
-            "device_type": "cuda",
-            "device_name": gpu_models[0] if gpu_models else "cuda",
-            "gpu_model": gpu_models[0] if gpu_models else None,
-            "gpu_models": gpu_models,
-            "gpu_count": gpu_count,
-            "gpu_total_vram_gb": round(sum(vram_per_device), 2),
-            "gpu_vram_per_device_gb": vram_per_device,
-        })
+        info.update(
+            {
+                "device_type": "cuda",
+                "device_name": gpu_models[0] if gpu_models else "cuda",
+                "gpu_model": gpu_models[0] if gpu_models else None,
+                "gpu_models": gpu_models,
+                "gpu_count": gpu_count,
+                "gpu_total_vram_gb": round(sum(vram_per_device), 2),
+                "gpu_vram_per_device_gb": vram_per_device,
+            }
+        )
     return info
 
 
 def _peak_gpu_mb() -> Optional[float]:
     if _TORCH and torch.cuda.is_available():
-        return round(torch.cuda.max_memory_allocated() / 1024 ** 2, 2)
+        return round(torch.cuda.max_memory_allocated() / 1024**2, 2)
     return None
 
 
 def _peak_cpu_mb() -> Optional[float]:
     if _PSUTIL:
-        return round(psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2, 2)
+        return round(psutil.Process(os.getpid()).memory_info().rss / 1024**2, 2)
     return None
 
 
@@ -207,7 +211,9 @@ def _predict_probs(model, X: np.ndarray, batch_size: Optional[int] = None) -> np
     raise TypeError(f"Cannot obtain probabilities from model type {type(model)!r}")
 
 
-def evaluate_extended(model, X: np.ndarray, y: np.ndarray, batch_size: Optional[int] = None) -> Dict[str, float]:
+def evaluate_extended(
+    model, X: np.ndarray, y: np.ndarray, batch_size: Optional[int] = None
+) -> Dict[str, float]:
     probs = _predict_probs(model, X, batch_size=batch_size)
     preds = np.argmax(probs, axis=1)
     try:
@@ -239,7 +245,9 @@ def _count_parameters(model) -> Dict[str, Optional[int]]:
         return {"parameter_count": None, "trainable_parameter_count": None}
     return {
         "parameter_count": int(sum(p.numel() for p in module.parameters())),
-        "trainable_parameter_count": int(sum(p.numel() for p in module.parameters() if p.requires_grad)),
+        "trainable_parameter_count": int(
+            sum(p.numel() for p in module.parameters() if p.requires_grad)
+        ),
     }
 
 
@@ -259,7 +267,7 @@ def _estimate_artifact_size_mb(model) -> Optional[float]:
                 torch.save(candidate.state_dict(), buffer)
             else:
                 pickle.dump(candidate, buffer, protocol=pickle.HIGHEST_PROTOCOL)
-            return round(len(buffer.getbuffer()) / 1024 ** 2, 6)
+            return round(len(buffer.getbuffer()) / 1024**2, 6)
         except Exception:
             continue
     return None
@@ -283,17 +291,23 @@ def _profile_flops_macs(model, input_dim: Optional[int]) -> Dict[str, Any]:
         result["note"] = "thop_not_installed"
         return result
     try:
-        device = next(module.parameters()).device if any(True for _ in module.parameters()) else torch.device("cpu")
+        device = (
+            next(module.parameters()).device
+            if any(True for _ in module.parameters())
+            else torch.device("cpu")
+        )
         dummy = torch.randn(1, int(input_dim), device=device)
         module.eval()
         macs, _ = profile(module, inputs=(dummy,), verbose=False)
-        result.update({
-            "flops": int(2 * macs) if macs is not None else None,
-            "macs": int(macs) if macs is not None else None,
-            "profiler": "thop",
-            "available": True,
-            "note": None,
-        })
+        result.update(
+            {
+                "flops": int(2 * macs) if macs is not None else None,
+                "macs": int(macs) if macs is not None else None,
+                "profiler": "thop",
+                "available": True,
+                "note": None,
+            }
+        )
     except Exception as exc:
         result["note"] = f"profile_failed:{type(exc).__name__}"
     return result
@@ -496,8 +510,7 @@ class BenchmarkLogger:
             )
         self._rec["experiment_id"] = eid
         self._rec["setting"] = {
-            k: (v.tolist() if isinstance(v, np.ndarray) else v)
-            for k, v in kwargs.items()
+            k: (v.tolist() if isinstance(v, np.ndarray) else v) for k, v in kwargs.items()
         }
 
     def set_preprocessing(self, clip_value: float, excluded_columns: Optional[List[str]] = None):
@@ -588,14 +601,18 @@ class BenchmarkLogger:
                 duration_s = t.duration.total_seconds() if t.duration else None
                 if duration_s is not None:
                     total_trial_runtime_s += duration_s
-                trials.append({
-                    "trial_idx": t.number,
-                    "params": {k: (v.item() if hasattr(v, "item") else v) for k, v in t.params.items()},
-                    "resolved_params": dict(t.user_attrs.get("resolved_hparams", {})) or None,
-                    "value": float(t.value) if t.value is not None else None,
-                    "duration_s": duration_s,
-                    "state": str(t.state),
-                })
+                trials.append(
+                    {
+                        "trial_idx": t.number,
+                        "params": {
+                            k: (v.item() if hasattr(v, "item") else v) for k, v in t.params.items()
+                        },
+                        "resolved_params": dict(t.user_attrs.get("resolved_hparams", {})) or None,
+                        "value": float(t.value) if t.value is not None else None,
+                        "duration_s": duration_s,
+                        "state": str(t.state),
+                    }
+                )
             best_idx = study.best_trial.number
             best_val = float(study.best_value)
         except Exception:
@@ -606,7 +623,9 @@ class BenchmarkLogger:
             "metric": "val_auroc",
             "best_trial_idx": best_idx,
             "best_value": best_val,
-            "best_params": {k: (v.item() if hasattr(v, "item") else v) for k, v in best_params.items()},
+            "best_params": {
+                k: (v.item() if hasattr(v, "item") else v) for k, v in best_params.items()
+            },
             "all_trials": trials,
             "total_trial_runtime_s": round(total_trial_runtime_s, 6),
         }
@@ -654,7 +673,9 @@ class BenchmarkLogger:
             "architecture_params": info.get("architecture_params"),
         }
         if self._rec["compute_budget"]:
-            self._rec["compute_budget"]["selected_batch_size"] = self._rec["training"].get("batch_size")
+            self._rec["compute_budget"]["selected_batch_size"] = self._rec["training"].get(
+                "batch_size"
+            )
             self._rec["compute_budget"]["selected_lr"] = self._rec["training"].get("lr")
 
     def record_model_stats(self, model, input_dim: Optional[int] = None):
@@ -673,10 +694,14 @@ class BenchmarkLogger:
             "flop_profile_note": flops["note"],
         }
 
-    def record_metrics(self, train_m: Dict[str, float], val_m: Dict[str, float], test_m: Dict[str, float]):
+    def record_metrics(
+        self, train_m: Dict[str, float], val_m: Dict[str, float], test_m: Dict[str, float]
+    ):
         self._rec["metrics"] = {"train": train_m, "val": val_m, "test": test_m}
 
-    def record_inference_benchmark(self, model, X: np.ndarray, batch_size: Optional[int] = None, split_name: str = "test"):
+    def record_inference_benchmark(
+        self, model, X: np.ndarray, batch_size: Optional[int] = None, split_name: str = "test"
+    ):
         info = _benchmark_inference(model, X, batch_size=batch_size)
         info["benchmark_split"] = split_name
         self._rec["inference_benchmark"][split_name] = info
@@ -686,10 +711,18 @@ class BenchmarkLogger:
         self._rec["runtime"]["peak_gpu_memory_mb"] = _peak_gpu_mb()
         self._rec["runtime"]["peak_cpu_memory_mb"] = _peak_cpu_mb()
         hardware = self._rec["hardware"]
-        self._rec["runtime"]["hpo_gpu_hours"] = _gpu_hours(self._rec["runtime"]["hpo_wall_s"], hardware)
-        self._rec["runtime"]["train_gpu_hours"] = _gpu_hours(self._rec["runtime"]["train_wall_s"], hardware)
-        self._rec["runtime"]["eval_gpu_hours"] = _gpu_hours(self._rec["runtime"]["eval_wall_s"], hardware)
-        self._rec["runtime"]["total_gpu_hours"] = _gpu_hours(self._rec["runtime"]["total_wall_s"], hardware)
+        self._rec["runtime"]["hpo_gpu_hours"] = _gpu_hours(
+            self._rec["runtime"]["hpo_wall_s"], hardware
+        )
+        self._rec["runtime"]["train_gpu_hours"] = _gpu_hours(
+            self._rec["runtime"]["train_wall_s"], hardware
+        )
+        self._rec["runtime"]["eval_gpu_hours"] = _gpu_hours(
+            self._rec["runtime"]["eval_wall_s"], hardware
+        )
+        self._rec["runtime"]["total_gpu_hours"] = _gpu_hours(
+            self._rec["runtime"]["total_wall_s"], hardware
+        )
         eid = self._rec["experiment_id"] or "unknown"
         with open(self._dir / f"{eid}.json", "w") as f:
             json.dump(self._rec, f, indent=2, default=_json_default)

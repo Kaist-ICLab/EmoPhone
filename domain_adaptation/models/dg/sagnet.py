@@ -21,6 +21,7 @@ class SagNet(nn.Module):
     """
     SagNet: Style Agnostic Networks (Nam et al., 2021)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__()
         self.hparams = hparams if hparams else {}
@@ -34,7 +35,7 @@ class SagNet(nn.Module):
             return torch.optim.Adam(
                 p,
                 lr=self.hparams.get("lr", 1e-3),
-                weight_decay=self.hparams.get('weight_decay', 0.0)
+                weight_decay=self.hparams.get("weight_decay", 0.0),
             )
 
         self.optimizer_f = opt(self.network_f.parameters())
@@ -92,9 +93,7 @@ class SagNet(nn.Module):
         loss_adv.backward()
         self.optimizer_f.step()
 
-        return {'loss_c': loss_c.item(), 'loss_s': loss_s.item(), 'loss_adv': loss_adv.item()}
+        return {"loss_c": loss_c.item(), "loss_s": loss_s.item(), "loss_adv": loss_adv.item()}
 
     def predict(self, x):
         return self.network_c(self.network_f(x))
-
-

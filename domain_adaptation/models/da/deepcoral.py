@@ -9,12 +9,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from .._da_helpers import (
-    DAModel,
     DEFAULT_BATCH_SIZE,
     DEFAULT_DEVICE,
     DEFAULT_EPOCHS,
     DEFAULT_LR,
     DEFAULT_PATIENCE,
+    DAModel,
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
@@ -26,16 +26,18 @@ from ..da_tllib_losses import CorrelationAlignmentLoss
 class DeepCORAL(DAModel):
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super(DeepCORAL, self).__init__(input_dim, num_classes, hparams)
-        
+
     # Standard forward uses DAModel.predict
-
-
 
 
 def train_deepcoral(
     model,
-    X_train, y_train, d_train,
-    X_val, y_val, d_val,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
     lr: float = DEFAULT_LR,
@@ -48,31 +50,33 @@ def train_deepcoral(
     Requires unlabeled target samples (X_target).
     """
     if X_target is None:
-        raise ValueError("DeepCORAL requires X_target for UDA. Use --uda to provide target samples.")
+        raise ValueError(
+            "DeepCORAL requires X_target for UDA. Use --uda to provide target samples."
+        )
 
     model = model.to(device)
-    weight_decay = model.hparams.get('weight_decay', 0.0)
+    weight_decay = model.hparams.get("weight_decay", 0.0)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
     coral = CorrelationAlignmentLoss()
-    trade_off = model.hparams.get('coral_lambda', model.hparams.get('mmd_gamma', 1.0))
+    trade_off = model.hparams.get("coral_lambda", model.hparams.get("mmd_gamma", 1.0))
 
     # Dataloaders
     train_dataset = torch.utils.data.TensorDataset(
-        torch.tensor(X_train, dtype=torch.float32),
-        torch.tensor(y_train, dtype=torch.long)
+        torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.long)
     )
     val_dataset = torch.utils.data.TensorDataset(
-        torch.tensor(X_val, dtype=torch.float32),
-        torch.tensor(y_val, dtype=torch.long)
+        torch.tensor(X_val, dtype=torch.float32), torch.tensor(y_val, dtype=torch.long)
     )
-    target_dataset = torch.utils.data.TensorDataset(
-        torch.tensor(X_target, dtype=torch.float32)
-    )
+    target_dataset = torch.utils.data.TensorDataset(torch.tensor(X_target, dtype=torch.float32))
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True, drop_last=True
+    )
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    target_loader = torch.utils.data.DataLoader(target_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    target_loader = torch.utils.data.DataLoader(
+        target_dataset, batch_size=batch_size, shuffle=True, drop_last=True
+    )
 
     def infinite_iterator(loader):
         while True:
@@ -82,8 +86,11 @@ def train_deepcoral(
     target_iter = infinite_iterator(target_loader)
 
     tracker = EarlyStopTracker(
-        patience=patience, epochs=epochs, batch_size=batch_size,
-        lr=lr, weight_decay=weight_decay,
+        patience=patience,
+        epochs=epochs,
+        batch_size=batch_size,
+        lr=lr,
+        weight_decay=weight_decay,
     )
 
     epoch_iterator = tqdm(range(epochs), desc="DeepCORAL Training")
@@ -93,7 +100,7 @@ def train_deepcoral(
 
         for X_s, y_s in train_loader:
             X_s, y_s = X_s.to(device), y_s.to(device)
-            X_t, = next(target_iter)
+            (X_t,) = next(target_iter)
             X_t = X_t.to(device)
 
             optimizer.zero_grad()
@@ -133,13 +140,18 @@ def train_deepcoral(
         except ValueError:
             val_auroc = 0.5
 
-        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
-                          val_loss=val_loss, val_auroc=val_auroc,
-                          iterator=epoch_iterator):
+        if tracker.record(
+            model,
+            epoch_num=epoch + 1,
+            train_loss=train_loss,
+            val_loss=val_loss,
+            val_auroc=val_auroc,
+            iterator=epoch_iterator,
+        ):
             break
 
     return tracker.finalize(model, optimizer=optimizer)
 
+
 # --- CGDM: Cross-Domain Gradient Discrepancy Minimization (CVPR 2021) ---
 # Ported from /home/iclab/minseo/DomainAdaptation/CGDM with minimal changes.
-

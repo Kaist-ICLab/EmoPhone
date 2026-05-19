@@ -9,12 +9,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from .._da_helpers import (
-    DAModel,
     DEFAULT_BATCH_SIZE,
     DEFAULT_DEVICE,
     DEFAULT_EPOCHS,
     DEFAULT_LR,
     DEFAULT_PATIENCE,
+    DAModel,
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
@@ -31,6 +31,7 @@ class JAN(DAModel):
     Joint Adaptation Network (Long et al., 2017)
     Aligns joint distributions via JMMD.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super(JAN, self).__init__(input_dim, num_classes, hparams)
         self.num_classes = num_classes
@@ -41,8 +42,12 @@ class JAN(DAModel):
 
 def train_jan(
     model,
-    X_train, y_train, d_train,
-    X_val, y_val, d_val,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
     epochs: int = DEFAULT_EPOCHS,
     batch_size: int = DEFAULT_BATCH_SIZE,
     lr: float = DEFAULT_LR,
@@ -58,23 +63,28 @@ def train_jan(
         raise ValueError("JAN requires X_target for UDA. Use --uda to provide target samples.")
 
     model = model.to(device)
-    weight_decay = model.hparams.get('weight_decay', 0.0)
-    trade_off = model.hparams.get('jmmd_lambda', 1.0)
-    kernel_num = model.hparams.get('jan_kernel_num', 5)
-    linear = model.hparams.get('jan_linear', True)
+    weight_decay = model.hparams.get("weight_decay", 0.0)
+    trade_off = model.hparams.get("jmmd_lambda", 1.0)
+    kernel_num = model.hparams.get("jan_kernel_num", 5)
+    linear = model.hparams.get("jan_linear", True)
 
-    kernels = [GaussianKernel(alpha=2 ** k) for k in range(kernel_num)]
+    kernels = [GaussianKernel(alpha=2**k) for k in range(kernel_num)]
     jmmd = JointMultipleKernelMaximumMeanDiscrepancy(kernels=(kernels, kernels), linear=linear)
 
-    train_loader, val_loader, target_loader = _build_loaders(X_train, y_train, X_val, y_val, X_target, batch_size)
+    train_loader, val_loader, target_loader = _build_loaders(
+        X_train, y_train, X_val, y_val, X_target, batch_size
+    )
     target_iter = _infinite_iterator(target_loader)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     class_criterion = nn.CrossEntropyLoss()
 
     tracker = EarlyStopTracker(
-        patience=patience, epochs=epochs, batch_size=batch_size,
-        lr=lr, weight_decay=weight_decay,
+        patience=patience,
+        epochs=epochs,
+        batch_size=batch_size,
+        lr=lr,
+        weight_decay=weight_decay,
     )
 
     epoch_iterator = tqdm(range(epochs), desc="JAN Training")
@@ -84,7 +94,7 @@ def train_jan(
 
         for X_s, y_s in train_loader:
             X_s, y_s = X_s.to(device), y_s.to(device)
-            X_t, = next(target_iter)
+            (X_t,) = next(target_iter)
             X_t = X_t.to(device)
 
             optimizer.zero_grad()
@@ -106,12 +116,17 @@ def train_jan(
         train_loss /= max(1, len(train_loader))
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
 
-        if tracker.record(model, epoch_num=epoch + 1, train_loss=train_loss,
-                          val_loss=val_loss, val_auroc=val_auroc,
-                          iterator=epoch_iterator):
+        if tracker.record(
+            model,
+            epoch_num=epoch + 1,
+            train_loss=train_loss,
+            val_loss=val_loss,
+            val_auroc=val_auroc,
+            iterator=epoch_iterator,
+        ):
             break
 
     return tracker.finalize(model, optimizer=optimizer)
 
-# --- SHOT: Source Hypothesis Transfer ---
 
+# --- SHOT: Source Hypothesis Transfer ---

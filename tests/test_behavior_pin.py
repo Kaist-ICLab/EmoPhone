@@ -106,15 +106,39 @@ def test_dann_training_is_deterministic(synthetic_da):
 
     _seed_everything(42)
     model_a = _make_dann(X_tr.shape[1])
-    train_dann(model_a, X_tr, y_tr, d_tr, X_val, y_val, d_val,
-               epochs=3, batch_size=32, lr=1e-3, patience=20,
-               device="cpu", X_target=X_tgt)
+    train_dann(
+        model_a,
+        X_tr,
+        y_tr,
+        d_tr,
+        X_val,
+        y_val,
+        d_val,
+        epochs=3,
+        batch_size=32,
+        lr=1e-3,
+        patience=20,
+        device="cpu",
+        X_target=X_tgt,
+    )
 
     _seed_everything(42)
     model_b = _make_dann(X_tr.shape[1])
-    train_dann(model_b, X_tr, y_tr, d_tr, X_val, y_val, d_val,
-               epochs=3, batch_size=32, lr=1e-3, patience=20,
-               device="cpu", X_target=X_tgt)
+    train_dann(
+        model_b,
+        X_tr,
+        y_tr,
+        d_tr,
+        X_val,
+        y_val,
+        d_val,
+        epochs=3,
+        batch_size=32,
+        lr=1e-3,
+        patience=20,
+        device="cpu",
+        X_target=X_tgt,
+    )
 
     # Two seeded runs must produce identical state dicts.
     sd_a = model_a.state_dict()
@@ -132,15 +156,39 @@ def test_dan_training_is_deterministic(synthetic_da):
 
     _seed_everything(42)
     model_a = _make_dan(X_tr.shape[1])
-    train_dan(model_a, X_tr, y_tr, d_tr, X_val, y_val, d_val,
-              epochs=3, batch_size=32, lr=1e-3, patience=20,
-              device="cpu", X_target=X_tgt)
+    train_dan(
+        model_a,
+        X_tr,
+        y_tr,
+        d_tr,
+        X_val,
+        y_val,
+        d_val,
+        epochs=3,
+        batch_size=32,
+        lr=1e-3,
+        patience=20,
+        device="cpu",
+        X_target=X_tgt,
+    )
 
     _seed_everything(42)
     model_b = _make_dan(X_tr.shape[1])
-    train_dan(model_b, X_tr, y_tr, d_tr, X_val, y_val, d_val,
-              epochs=3, batch_size=32, lr=1e-3, patience=20,
-              device="cpu", X_target=X_tgt)
+    train_dan(
+        model_b,
+        X_tr,
+        y_tr,
+        d_tr,
+        X_val,
+        y_val,
+        d_val,
+        epochs=3,
+        batch_size=32,
+        lr=1e-3,
+        patience=20,
+        device="cpu",
+        X_target=X_tgt,
+    )
 
     sd_a = model_a.state_dict()
     sd_b = model_b.state_dict()
@@ -157,16 +205,38 @@ def test_dann_records_metadata(synthetic_da):
 
     _seed_everything(42)
     model = _make_dann(X_tr.shape[1])
-    train_dann(model, X_tr, y_tr, d_tr, X_val, y_val, d_val,
-               epochs=2, batch_size=32, lr=1e-3, patience=20,
-               device="cpu", X_target=X_tgt)
+    train_dann(
+        model,
+        X_tr,
+        y_tr,
+        d_tr,
+        X_val,
+        y_val,
+        d_val,
+        epochs=2,
+        batch_size=32,
+        lr=1e-3,
+        patience=20,
+        device="cpu",
+        X_target=X_tgt,
+    )
 
     info = getattr(model, "_training_info", {})
     expected_keys = {
-        "optimizer", "best_epoch", "early_stopped", "early_stop_epoch",
-        "epochs_ran", "max_epochs", "batch_size", "patience", "lr",
-        "weight_decay", "model_selection_metric", "best_metric_value",
-        "epoch_history", "discriminator_lr",
+        "optimizer",
+        "best_epoch",
+        "early_stopped",
+        "early_stop_epoch",
+        "epochs_ran",
+        "max_epochs",
+        "batch_size",
+        "patience",
+        "lr",
+        "weight_decay",
+        "model_selection_metric",
+        "best_metric_value",
+        "epoch_history",
+        "discriminator_lr",
     }
     missing = expected_keys - set(info)
     assert not missing, f"missing metadata keys: {missing}"

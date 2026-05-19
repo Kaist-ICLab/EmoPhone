@@ -22,14 +22,15 @@ class IRM(ERM):
     """
     Invariant Risk Minimization (Arjovsky et al., 2019)
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super().__init__(input_dim, num_classes, hparams)
-        self.register_buffer('update_count', torch.tensor([0]))
+        self.register_buffer("update_count", torch.tensor([0]))
 
     @staticmethod
     def _irm_penalty(logits, y):
         device = logits.device
-        scale = torch.tensor(1.).to(device).requires_grad_()
+        scale = torch.tensor(1.0).to(device).requires_grad_()
         loss_1 = F.cross_entropy(logits[::2] * scale, y[::2])
         loss_2 = F.cross_entropy(logits[1::2] * scale, y[1::2])
         grad_1 = autograd.grad(loss_1, [scale], create_graph=True)[0]
@@ -38,19 +39,19 @@ class IRM(ERM):
 
     def update(self, minibatches, unlabeled=None, **kwargs):
         penalty_weight = (
-            self.hparams.get('irm_lambda', 1.0)
-            if self.update_count >= self.hparams.get('irm_penalty_anneal_iters', 0)
+            self.hparams.get("irm_lambda", 1.0)
+            if self.update_count >= self.hparams.get("irm_penalty_anneal_iters", 0)
             else 1.0
         )
-        nll = 0.
-        penalty = 0.
+        nll = 0.0
+        penalty = 0.0
 
         all_x = torch.cat([x for x, y in minibatches])
         all_logits = self.network(all_x)
         all_logits_idx = 0
 
         for x, y in minibatches:
-            logits = all_logits[all_logits_idx:all_logits_idx + x.shape[0]]
+            logits = all_logits[all_logits_idx : all_logits_idx + x.shape[0]]
             all_logits_idx += x.shape[0]
             nll += F.cross_entropy(logits, y)
             penalty += self._irm_penalty(logits, y)
@@ -59,11 +60,11 @@ class IRM(ERM):
         penalty /= len(minibatches)
         loss = nll + penalty_weight * penalty
 
-        if self.update_count == self.hparams.get('irm_penalty_anneal_iters', 0):
+        if self.update_count == self.hparams.get("irm_penalty_anneal_iters", 0):
             self.optimizer = torch.optim.Adam(
                 self.network.parameters(),
-                lr=self.hparams.get('lr', 1e-3),
-                weight_decay=self.hparams.get('weight_decay', 0.0)
+                lr=self.hparams.get("lr", 1e-3),
+                weight_decay=self.hparams.get("weight_decay", 0.0),
             )
 
         self.optimizer.zero_grad()
@@ -71,6 +72,4 @@ class IRM(ERM):
         self.optimizer.step()
 
         self.update_count += 1
-        return {'loss': loss.item(), 'nll': nll.item(), 'penalty': penalty.item()}
-
-
+        return {"loss": loss.item(), "nll": nll.item(), "penalty": penalty.item()}

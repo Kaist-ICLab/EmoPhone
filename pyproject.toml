@@ -1,0 +1,33 @@
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+extend-exclude = '''
+/(
+  _external
+  | \.venv
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["models", "domain_adaptation", "benchmark"]
+skip_glob = ["_external/*", "*/.venv/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["_external", ".venv"]
+
+[tool.ruff.lint]
+# Conservative starter set: only flag truly broken code (E9 / F syntax) so
+# the formatter pass doesn't churn unrelated style this round.
+select = ["E9", "F"]
+ignore = [
+    "F401",  # unused imports — many wrapper files re-export
+    "F403",  # star imports in shim files
+    "F405",  # may be undefined from star imports
+    "F811",  # redefinitions in conditional branches (e.g. CGDM helpers)
+    "F841",  # unused variables (some are intentional placeholders)
+]

@@ -1,4 +1,5 @@
 """CBST: Class-Balanced Self-Training (Zou et al., 2018)."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,6 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 
 from .._da_helpers import (
@@ -17,10 +19,9 @@ from .._da_helpers import (
     EarlyStopTracker,
     _build_loaders,
     _evaluate_val,
+    _finalize_training_metadata,
     _infinite_iterator,
 )
-from sklearn.metrics import roc_auc_score
-from .._da_helpers import _finalize_training_metadata
 
 
 class CBST(DAModel):
@@ -28,13 +29,26 @@ class CBST(DAModel):
     CBST: Class-Balanced Self-Training (Zou et al., 2018)
     Iterative self-training with class-balanced pseudo-label selection.
     """
+
     def __init__(self, input_dim, num_classes=2, hparams=None):
         super(CBST, self).__init__(input_dim, num_classes, hparams)
 
 
-def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
-               epochs=50, batch_size=64, lr=1e-3, patience=5,
-               device='cuda' if torch.cuda.is_available() else 'cpu', X_target=None):
+def train_cbst(
+    model,
+    X_train,
+    y_train,
+    d_train,
+    X_val,
+    y_val,
+    d_val,
+    epochs=50,
+    batch_size=64,
+    lr=1e-3,
+    patience=5,
+    device="cuda" if torch.cuda.is_available() else "cpu",
+    X_target=None,
+):
     """
     CBST (official-style):
       1) Train on source.
@@ -47,7 +61,7 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
         raise ValueError("CBST requires X_target for UDA. Use --uda to provide target samples.")
 
     model = model.to(device)
-    weight_decay = model.hparams.get('weight_decay', 0.0)
+    weight_decay = model.hparams.get("weight_decay", 0.0)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     criterion = nn.CrossEntropyLoss()
 
@@ -55,19 +69,23 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
     X_s = torch.tensor(X_train, dtype=torch.float32).to(device)
     y_s = torch.tensor(y_train, dtype=torch.long).to(device)
     ds_s = torch.utils.data.TensorDataset(X_s, y_s)
-    loader_s = torch.utils.data.DataLoader(ds_s, batch_size=batch_size, shuffle=True, drop_last=True)
+    loader_s = torch.utils.data.DataLoader(
+        ds_s, batch_size=batch_size, shuffle=True, drop_last=True
+    )
 
     # Validation loader (source labels)
     val_dataset = torch.utils.data.TensorDataset(
         torch.tensor(X_val, dtype=torch.float32),
         torch.tensor(y_val, dtype=torch.long),
     )
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=max(batch_size, 256), shuffle=False)
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, batch_size=max(batch_size, 256), shuffle=False
+    )
 
     # Target data (unlabeled)
     X_t = torch.tensor(X_target, dtype=torch.float32).to(device)
 
-    best_val_score = -float('inf')
+    best_val_score = -float("inf")
     best_model_state = None
     best_phase = None
     best_step = None
@@ -77,12 +95,14 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
     def _track_best(phase, step):
         nonlocal best_val_score, best_model_state, best_phase, best_step
         val_loss, val_auroc = _evaluate_val(model, val_loader, device)
-        epoch_history.append({
-            'phase': phase,
-            'step': step,
-            'val_loss': round(float(val_loss), 6),
-            'val_auroc': round(float(val_auroc), 6),
-        })
+        epoch_history.append(
+            {
+                "phase": phase,
+                "step": step,
+                "val_loss": round(float(val_loss), 6),
+                "val_auroc": round(float(val_auroc), 6),
+            }
+        )
         if val_auroc > best_val_score:
             best_val_score = val_auroc
             best_model_state = copy.deepcopy(model.state_dict())
@@ -91,7 +111,7 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
         return val_loss, val_auroc
 
     # 1) Pretrain on source
-    pretrain_epochs = model.hparams.get('cbst_pretrain_epochs', max(1, epochs // 2))
+    pretrain_epochs = model.hparams.get("cbst_pretrain_epochs", max(1, epochs // 2))
     epoch_iterator = tqdm(range(pretrain_epochs), desc="CBST Pretrain")
     for epoch in epoch_iterator:
         model.train()
@@ -102,15 +122,15 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
             loss.backward()
             optimizer.step()
         epochs_ran += 1
-        val_loss, val_auroc = _track_best('pretrain', epoch + 1)
-        epoch_iterator.set_postfix({'Val Loss': f'{val_loss:.4f}', 'Val AUC': f'{val_auroc:.4f}'})
+        val_loss, val_auroc = _track_best("pretrain", epoch + 1)
+        epoch_iterator.set_postfix({"Val Loss": f"{val_loss:.4f}", "Val AUC": f"{val_auroc:.4f}"})
 
     # 2) Iterative self-training with class-balanced thresholds
-    max_iter = model.hparams.get('cbst_max_iter', 5)
-    init_port = model.hparams.get('cbst_init_port', 0.2)
-    port_step = model.hparams.get('cbst_port_step', 0.1)
-    max_port = model.hparams.get('cbst_max_port', 0.8)
-    retrain_epochs = model.hparams.get('cbst_retrain_epochs', 5)
+    max_iter = model.hparams.get("cbst_max_iter", 5)
+    init_port = model.hparams.get("cbst_init_port", 0.2)
+    port_step = model.hparams.get("cbst_port_step", 0.1)
+    max_port = model.hparams.get("cbst_max_port", 0.8)
+    retrain_epochs = model.hparams.get("cbst_retrain_epochs", 5)
 
     num_classes = model.classifier[-1].out_features
 
@@ -150,9 +170,13 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
         X_aug = torch.cat([X_s, X_pseudo])
         y_aug = torch.cat([y_s, pseudo_labels_cat])
         ds_aug = torch.utils.data.TensorDataset(X_aug, y_aug)
-        loader_aug = torch.utils.data.DataLoader(ds_aug, batch_size=batch_size, shuffle=True, drop_last=True)
+        loader_aug = torch.utils.data.DataLoader(
+            ds_aug, batch_size=batch_size, shuffle=True, drop_last=True
+        )
 
-        logger.info(f"CBST: Round {round_idx+1}/{max_iter} - Retraining with {len(X_pseudo)} pseudo-labels")
+        logger.info(
+            f"CBST: Round {round_idx+1}/{max_iter} - Retraining with {len(X_pseudo)} pseudo-labels"
+        )
         model.train()
         for _ in range(retrain_epochs):
             for x, y in loader_aug:
@@ -163,8 +187,10 @@ def train_cbst(model, X_train, y_train, d_train, X_val, y_val, d_val,
                 optimizer.step()
             epochs_ran += 1
 
-        val_loss, val_auroc = _track_best('selftrain', round_idx + 1)
-        logger.info(f"CBST: Round {round_idx+1} val_auroc={val_auroc:.4f} (best={best_val_score:.4f} @ {best_phase}/{best_step})")
+        val_loss, val_auroc = _track_best("selftrain", round_idx + 1)
+        logger.info(
+            f"CBST: Round {round_idx+1} val_auroc={val_auroc:.4f} (best={best_val_score:.4f} @ {best_phase}/{best_step})"
+        )
 
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
