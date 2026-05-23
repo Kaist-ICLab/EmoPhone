@@ -61,12 +61,44 @@ Upstream reference: [Transfer-Learning-Library (TLL)](https://github.com/thuml/T
 
 ```
 domain_adaptation/
-├── README.md            # this file
-└── models/              # in-repo DG / DA implementations
-    ├── da_models.py     # DANN, CDAN, DAN, DeepCORAL, MCC, ADDA, MCD, JAN, SHOT, CBST, CGDM
-    ├── domainbed_algos.py  # IRM, VREx, GroupDRO, MixStyle, MLDG, MASF, Fish, CSD, SagNet
-    └── da_tllib_losses.py  # TLL-style adversarial / MMD losses shared by the DA family
+├── README.md                # this file
+├── __init__.py
+└── models/                  # in-repo DG / DA implementations
+    ├── __init__.py
+    ├── _da_helpers.py       # shared EarlyStopTracker / DataLoader utilities for train_* loops
+    ├── da_tllib_losses.py   # TLL-style adversarial / MMD / coral losses shared by the DA family
+    ├── da_models.py         # back-compat shim re-exporting from da/*
+    ├── domainbed_algos.py   # back-compat shim re-exporting from dg/*
+    ├── da/                  # one file per DA algorithm (TLL protocols)
+    │   ├── __init__.py
+    │   ├── dann.py          # DANN
+    │   ├── cdan.py          # CDAN
+    │   ├── dan.py           # DAN
+    │   ├── deepcoral.py     # DeepCORAL
+    │   ├── mcc.py           # MCC
+    │   ├── adda.py          # ADDA
+    │   ├── mcd.py           # MCD
+    │   ├── jan.py           # JAN
+    │   ├── shot.py          # SHOT
+    │   ├── cbst.py          # CBST
+    │   └── cgdm.py          # CGDM
+    └── dg/                  # one file per DG algorithm (DomainBed protocols)
+        ├── __init__.py
+        ├── _base.py         # shared FeatureClassifier / backbone wiring
+        ├── _train.py        # shared DG training loop (source-only val selection)
+        ├── erm.py           # ERM
+        ├── irm.py           # IRM
+        ├── vrex.py          # VREx
+        ├── gdro.py          # GroupDRO
+        ├── mixstyle.py      # MixStyle
+        ├── mldg.py          # MLDG
+        ├── masf.py          # MASF
+        ├── fish.py          # Fish
+        ├── csd.py           # CSD
+        └── sagnet.py        # SagNet
 ```
+
+The `da_models.py` and `domainbed_algos.py` modules at the top of `models/` are kept as **backward-compatible shims** — existing imports of the form `from domain_adaptation.models.da_models import DANN, train_dann` continue to work and resolve to the per-algorithm files under `da/` and `dg/`.
 
 ---
 

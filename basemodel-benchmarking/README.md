@@ -34,18 +34,57 @@ Linear-attention patches are applied to `TabTransformer`, `SAINT`, and `FTTransf
 
 ```
 basemodel-benchmarking/
-├── README.md                         # this file
-└── basemodel_benchmark_outputs/      # run outputs (gitignored; see .gitignore)
-    ├── runs/                         # per-run checkpoints, logs, HPO studies
-    ├── latest/                       # convenience symlinks/copies
-    ├── cross_domain_tabpfn/          # cross-wave TabPFN exploration
-    ├── cross_domain_xgboost/         # cross-wave XGBoost exploration
-    └── feature_importances_xgboost/  # XGBoost feature-importance dumps
+├── README.md                # this file
+├── benchmark.py             # Setting A + Setting B runner (within-wave)
+├── cross_dataset.py         # Setting C runner (cross-wave 1->1 and 2->1)
+├── benchmark_logger.py      # shared logger + metric / output contract
+├── data_loader.py           # BenchmarkDataset + per-user / temporal split helpers
+├── hparams_registry.py      # per-model Optuna search spaces
+├── backbones.py             # shared MLP / ResNet / Transformer feature extractors
+├── utility.py               # small helpers reused across runners
+├── models/                  # per-wrapper baseline + tabular-NN package
+│   ├── __init__.py
+│   ├── _helpers.py
+│   ├── baselines.py         # MLP, ResNet
+│   ├── xgb.py               # XGBoost wrapper
+│   ├── lgb.py               # LightGBM wrapper
+│   ├── tabnet.py            # pytorch_tabnet wrapper
+│   ├── widedeep.py          # SAINT, TabTransformer, FTTransformer (pytorch_widedeep)
+│   └── deepctr.py           # DCN / AutoInt (deepctr_torch)
+└── scripts/                 # shell drivers for full sweeps (gitignored outputs)
+    ├── README.md
+    ├── run_setting_a.sh     # Setting A sweep
+    ├── run_setting_b.sh     # Setting B sweep
+    ├── run_setting_c.sh     # Setting C sweep
+    └── run_debug.sh         # 1-trial / 1-fold smoke run
 ```
+
+Run outputs (`results/`, `results/records/`, per-run checkpoints) are gitignored — see the repo-root [`.gitignore`](../.gitignore).
 
 ## Running
 
-See the setting-level READMEs for the protocol:
+Single-model invocation from the repo root:
+
+```bash
+# Setting B (within-wave cross-user, group-kfold; default split_strategy)
+python basemodel-benchmarking/benchmark.py \
+    --dataset D-1 --label valence --model XGB \
+    --hpo_trials 30 --hpo_mode fold1
+
+# Setting A (per-user temporal split)
+python basemodel-benchmarking/benchmark.py \
+    --dataset D-1 --label valence --model XGB \
+    --split_strategy temporal --hpo_trials 30
+
+# Setting C (cross-wave)
+python basemodel-benchmarking/cross_dataset.py \
+    --label arousal --model XGB \
+    --run_setting one_to_one --hpo_trials 30
+```
+
+Full sweeps that orchestrate every model across labels and waves live in [`scripts/`](./scripts/).
+
+Setting-level protocols:
 
 - Setting A: [`../benchmark/setting_a/README.md`](../benchmark/setting_a/README.md)
 - Setting B: [`../benchmark/setting_b/README.md`](../benchmark/setting_b/README.md)
