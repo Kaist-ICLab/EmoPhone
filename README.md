@@ -127,6 +127,7 @@ EmoPhone/
 ├── CONTRIBUTING.md                   ← PR / issue guidance
 ├── requirements.txt                  ← top-level pinned Python deps
 ├── environment.yml                   ← optional conda mirror
+├── pyproject.toml                    ← Black / isort / ruff config
 │
 ├── docs/                             ← long-form docs
 │   ├── dataset_overview.md
@@ -144,7 +145,7 @@ EmoPhone/
 │   ├── pipeline_decisions.md         ← per-wave QC, scale normalisation, alias map
 │   └── feature_alignment.md          ← mirrors docs/feature_alignment.md
 │
-├── benchmark/
+├── benchmark/                        ← protocol specs + result tables (docs only)
 │   ├── README.md                     ← three-setting ladder + model inventory
 │   ├── setting_a/README.md           ← personal-history predictability
 │   ├── setting_b/README.md           ← within-wave cross-user transfer
@@ -152,8 +153,26 @@ EmoPhone/
 │   ├── utils/README.md               ← shared loader / metric contract
 │   └── results/                      ← committed per-task CSV/JSON summaries
 │
-├── basemodel-benchmarking/           ← Setting A/B/C baseline + tabular-NN runs (code + outputs)
-├── domain_adaptation/                ← Setting B/C DG + DA runs (code)
+├── basemodel-benchmarking/           ← Setting A/B/C baseline + tabular-NN runtime
+│   ├── README.md
+│   ├── benchmark.py                  ← Setting A + Setting B runner
+│   ├── cross_dataset.py              ← Setting C runner
+│   ├── benchmark_logger.py
+│   ├── data_loader.py, hparams_registry.py, backbones.py, utility.py
+│   ├── models/                       ← per-wrapper baseline + tabular-NN package
+│   │   ├── baselines.py, xgb.py, lgb.py, tabnet.py, widedeep.py, deepctr.py
+│   │   └── _helpers.py
+│   └── scripts/                      ← shell drivers (run_setting_{a,b,c}.sh, run_debug.sh)
+│
+├── domain_adaptation/                ← Setting B/C DG + DA runtime
+│   ├── README.md
+│   └── models/
+│       ├── _da_helpers.py
+│       ├── da_tllib_losses.py
+│       ├── da_models.py              ← back-compat shim → da/*
+│       ├── domainbed_algos.py        ← back-compat shim → dg/*
+│       ├── da/                       ← one file per DA algorithm
+│       └── dg/                       ← one file per DG algorithm
 │
 ├── EDA/                              ← dataset-characterisation notebooks
 ├── images/                           ← figures referenced by READMEs
