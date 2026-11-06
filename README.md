@@ -2,22 +2,23 @@
 
 > A three-wave in-the-wild smartphone and wearable sensing dataset for moment-level affect modeling in everyday life.
 
-[![Code License](https://img.shields.io/badge/Code%20license-TBD-lightgrey)](./LICENSE)
-[![Data Terms](https://img.shields.io/badge/Data%20terms-TBD-lightgrey)](./LICENSE-DATA.md)
-[![DOI](https://img.shields.io/badge/DOI-TBD%20on%20acceptance-lightgrey)](#citation)
-[![Paper](https://img.shields.io/badge/Paper-NeurIPS%202026%20D%26B-green)](#citation)
+[![Website](https://img.shields.io/badge/Website-emophone.iclab.dev-0a7cff)](https://emophone.iclab.dev/)
+[![Paper](https://img.shields.io/badge/Paper-NeurIPS%202026%20Evaluations%20%26%20Datasets-green)](#citation)
+[![arXiv](https://img.shields.io/badge/arXiv-2609.16581-b31b1b)](https://arxiv.org/abs/2609.16581)
+[![DOI](https://img.shields.io/badge/DOI-10.7910%2FDVN%2FQGRVU8-blue)](https://doi.org/10.7910/DVN/QGRVU8)
+[![Harvard Dataverse](https://img.shields.io/badge/Data-Harvard%20Dataverse-red)](#data-access)
+[![Code License](https://img.shields.io/badge/Code%20license-Apache--2.0-lightgrey)](./LICENSE)
+[![Data Terms](https://img.shields.io/badge/Data%20terms-Credentialed%20access%20%2B%20DUA-lightgrey)](./LICENSE-DATA.md)
 [![Datasheet](https://img.shields.io/badge/Docs-Datasheet-orange)](./DATASHEET.md)
 [![Croissant](https://img.shields.io/badge/Metadata-Croissant-7f52b5)](./metadata/croissant_rai_EmoPhone_A_Multi-Wave_Dataset_for_In-the-Wild_Mob.json)
-[![Harvard Dataverse](https://img.shields.io/badge/Data-Harvard%20Dataverse-red)](#data-access)
 
-
-> **Dataset name, DOI, paper title, authors, and licenses are finalized on acceptance/public release.** This repository uses the working name `EmoPhone`; final names and legal terms will be substituted throughout before release.
+> **Accepted at NeurIPS 2026, Track on Evaluations and Datasets.** Project website: **[emophone.iclab.dev](https://emophone.iclab.dev/)**. Dataset record: **[Harvard Dataverse, doi:10.7910/DVN/QGRVU8](https://doi.org/10.7910/DVN/QGRVU8)**. Preprint: **[arXiv:2609.16581](https://arxiv.org/abs/2609.16581)**.
 
 ---
 
 ## Overview
 
-This repository contains the documentation, metadata, preprocessing notes, and benchmark scaffolding for the **D1, D2, and D3** dataset — three consecutive annual waves of an in-the-wild affective sensing study. Each wave pairs passive sensor data from participants' own Android smartphones and Fitbit wearables with dense in-situ affective state labels collected via the Experience Sampling Method (ESM).
+This repository contains the documentation, metadata, preprocessing notes, and benchmark scaffolding for **EmoPhone (D1, D2, and D3)**, three consecutive annual waves of an in-the-wild affective sensing study. The project website at [emophone.iclab.dev](https://emophone.iclab.dev/) hosts the paper, data-access instructions, and documentation. Each wave pairs passive sensor data from participants' own Android smartphones and Fitbit wearables with dense in-situ affective state labels collected via the Experience Sampling Method (ESM).
 
 Together, the three waves provide **53,139 ESM responses** from **297 participants** (328 recruited; 9.8% / 11.6% / 7.0% excluded by QC in D1 / D2 / D3), collected between **2020-02-07 and 2022-01-11** in South Korea.
 
@@ -30,7 +31,7 @@ Together, the three waves provide **53,139 ESM responses** from **297 participan
 <p align="center">
   <img src="images/study_design_protocol.png" alt="Three-wave sensing and ESM protocol overview" width="820">
 </p>
-<p align="center"><em>Figure 1. Three-wave study protocol, sensing streams, and ESM label evolution.</em></p>
+<p align="center"><em>Figure 1. Three-wave study protocol: smartphone and wearable sensing streams, ESM label sets per wave, and the participant information shared across waves.</em></p>
 
 ---
 
@@ -118,8 +119,8 @@ EmoPhone/
 │
 ├── README.md                         ← this file
 ├── DATASHEET.md                      ← Gebru-style datasheet (NeurIPS D&B requirement)
-├── LICENSE                           ← code license placeholder (TBD)
-├── LICENSE-DATA.md                   ← data license / DUA placeholder (TBD)
+├── LICENSE                           ← code license (Apache-2.0)
+├── LICENSE-DATA.md                   ← data access terms and DUA summary
 ├── CITATION.cff                      ← machine-readable citation
 ├── AUTHORS.md                        ← contributors
 ├── RESPONSIBILITY.md                 ← NeurIPS D&B author responsibility statement
@@ -190,21 +191,25 @@ EmoPhone/
 
 ## Data Access
 
-The planned release target is **Harvard Dataverse** with gated access. Users will log in, agree to the Data Use Agreement (DUA), and then download. The final landing page, file IDs, DOI, license, and DUA text will be populated on acceptance/public release.
+The dataset is published on **Harvard Dataverse** under credentialed access:
+
+- **Landing page / DOI:** [https://doi.org/10.7910/DVN/QGRVU8](https://doi.org/10.7910/DVN/QGRVU8)
+- **Access instructions:** [emophone.iclab.dev/access.html](https://emophone.iclab.dev/access.html)
+
+All data files are restricted. Metadata and documentation are visible to everyone, but downloading any file requires an approved access request and agreement to the Data Use Agreement (DUA).
 
 **To download:**
-1. Visit the dataset page at **[TBD Harvard Dataverse URL — populated on acceptance]**.
-2. Log in or create a free Harvard Dataverse account.
-3. Read and agree to the Data Use Agreement.
-4. Download individual wave archives (`D1.zip`, `D2.zip`, `D3.zip`) or the full dataset.
+1. Open the dataset page at [doi:10.7910/DVN/QGRVU8](https://doi.org/10.7910/DVN/QGRVU8) and log in or create a free Harvard Dataverse account.
+2. Click **Request Access**, read and accept the terms, and fill in the user agreement form linked from the dataset's terms of access.
+3. After approval, download the files you need. Each wave is a folder (`D1/`, `D2/`, `D3/`) containing `EsmResponse.csv`, `UserInfo.csv`, and a `Sensor/` folder with one archive per participant (`D1_Sensor_P033.tar.gz`, `D2_Sensor_P001.tar.gz`, and so on; 320 archives in total).
 
-**Download via the Dataverse API** (after agreeing to terms on the website):
+**Download via the Dataverse API** (after access has been granted; file IDs are shown on each file's page):
 
 ```bash
-# D1 as an example
-curl -L "https://dataverse.harvard.edu/api/access/datafile/TBD_FILE_ID_D1" \
+# D1 ESM responses as an example (file ID 13766498)
+curl -L "https://dataverse.harvard.edu/api/access/datafile/13766498" \
      -H "X-Dataverse-key: YOUR_API_TOKEN" \
-     -o D1.zip
+     -o D1/EsmResponse.csv
 ```
 
 **Python equivalent**:
@@ -213,14 +218,21 @@ curl -L "https://dataverse.harvard.edu/api/access/datafile/TBD_FILE_ID_D1" \
 import requests
 
 api_token = "YOUR_API_TOKEN"  # Dataverse account → API Token
-file_id   = "TBD_FILE_ID_D1"  # from the Dataverse dataset page
+file_id   = 13766498          # D1/EsmResponse.csv; see the dataset page for other file IDs
 
 r = requests.get(
     f"https://dataverse.harvard.edu/api/access/datafile/{file_id}",
     headers={"X-Dataverse-key": api_token},
 )
-with open("D1.zip", "wb") as f:
+r.raise_for_status()
+with open("D1/EsmResponse.csv", "wb") as f:
     f.write(r.content)
+```
+
+The full file list with IDs can be retrieved from the dataset metadata endpoint:
+
+```bash
+curl -s "https://dataverse.harvard.edu/api/datasets/:persistentId/?persistentId=doi:10.7910/DVN/QGRVU8"
 ```
 
 See [`data/README.md`](./data/README.md) for the full data-folder structure and loading examples.
@@ -245,14 +257,26 @@ md5sum -c metadata/checksums.md5
 
 ## Citation
 
+If you use the dataset or the benchmark code, please cite the NeurIPS paper and the Dataverse record.
+
 ```bibtex
-@inproceedings{emophone2026,
-  title     = {[Dataset Title — TBD on acceptance]},
-  author    = {[Author list — TBD on acceptance]},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+@inproceedings{zhang2026emophone,
+  title     = {EmoPhone: A Multi-Wave Dataset for In-the-Wild Mobile and Wearable Affect Sensing},
+  author    = {Zhang, Panyu and Park, Minseo and Kang, Soowon and Ismatzoda, Tomiris and Mustafakulov, Azizbek and Najimov, Otabek and Choi, Woohyeok and Alikhanov, Jumabek and Ghosh, Surjya and Lee, Uichin},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS 2026), Track on Evaluations and Datasets},
   year      = {2026},
-  doi       = {TBD},
-  url       = {TBD}
+  eprint    = {2609.16581},
+  archivePrefix = {arXiv},
+  url       = {https://arxiv.org/abs/2609.16581}
+}
+
+@data{emophone_dataverse_2026,
+  title     = {EmoPhone: A Multi-Wave Dataset for In-the-Wild Mobile and Wearable Affect Sensing},
+  author    = {Zhang, Panyu and Park, Minseo and Kang, Soowon and Ismatzoda, Tomiris and Mustafakulov, Azizbek and Najimov, Otabek and Choi, Woohyeok and Alikhanov, Jumabek and Ghosh, Surjya and Lee, Uichin},
+  publisher = {Harvard Dataverse},
+  year      = {2026},
+  doi       = {10.7910/DVN/QGRVU8},
+  url       = {https://doi.org/10.7910/DVN/QGRVU8}
 }
 
 @article{zhang2024reproducible,
@@ -272,10 +296,11 @@ See [`CITATION.cff`](./CITATION.cff) for the machine-readable form.
 
 ## License and Ethics
 
-- **Code license:** TBD; see [`LICENSE`](./LICENSE).
-- **Data license and DUA:** TBD; see [`LICENSE-DATA.md`](./LICENSE-DATA.md).
+- **Code license:** Apache-2.0; see [`LICENSE`](./LICENSE).
+- **Documentation and metadata:** CC BY 4.0 (the license attached to the Dataverse record).
+- **Data files:** credentialed access governed by the dataset-specific Data Use Agreement, which prohibits re-identification attempts, surveillance or profiling uses, and redistribution of participant-level data; see [`LICENSE-DATA.md`](./LICENSE-DATA.md) and the [access page](https://emophone.iclab.dev/access.html).
 
-All data collection was approved by the Institutional Review Board at **[TBD institution]** (approval number **[TBD]**). Participants provided written informed consent and received ~100 USD compensation. Anonymisation applied prior to release: MD5-hashed contact numbers, UUID-replaced Wi-Fi/Bluetooth MAC addresses, per-participant random displacement of GPS longitude. See [`docs/ethics.md`](./docs/ethics.md) and [`DATASHEET.md`](./DATASHEET.md) § 2.
+All three collection waves were conducted under protocols approved by the Institutional Review Board of KAIST. Participants provided written informed consent, including a clause on voluntary public dataset release, and received ~100 USD compensation. Anonymisation applied prior to release: MD5-hashed contact numbers, UUID-replaced Wi-Fi/Bluetooth MAC addresses, per-participant random displacement of GPS longitude. See [`docs/ethics.md`](./docs/ethics.md) and [`DATASHEET.md`](./DATASHEET.md) § 2.
 
 The authors accept full responsibility for any rights violations arising from this release; see [`RESPONSIBILITY.md`](./RESPONSIBILITY.md).
 
@@ -285,4 +310,6 @@ Maintenance plan and versioning policy: [`MAINTENANCE.md`](./MAINTENANCE.md). Ch
 
 ## Contact
 
-For questions about the dataset or code, contact **[TBD contact email — populated on acceptance]** or open a GitHub issue. Contribution guidance: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+- **Project website:** [https://emophone.iclab.dev/](https://emophone.iclab.dev/)
+- **Corresponding author:** Uichin Lee, KAIST (uclee@kaist.ac.kr)
+- **Dataset and code questions:** open a [GitHub issue](https://github.com/Kaist-ICLab/EmoPhone/issues) or use the contact page at [emophone.iclab.dev/contact.html](https://emophone.iclab.dev/contact.html). Contribution guidance: [`CONTRIBUTING.md`](./CONTRIBUTING.md).
